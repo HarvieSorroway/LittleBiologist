@@ -106,9 +106,9 @@ namespace LittleBiologist
             update?.Invoke();
             if (Input.GetMouseButtonDown(2))
             {
-                for(int i = 0;i < LittleBiologist_Label.labels.Count; i++)
+                for(int i = 0;i <currentCamera.room.drawableObjects.Count; i++)
                 {
-                    Log(LittleBiologist_Label.labels[i].abstractCreature);
+                    Log(currentCamera.room.drawableObjects[i]);
                 }
             }
         }

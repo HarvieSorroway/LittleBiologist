@@ -56,7 +56,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Class1.cs" />
     <Compile Include="LittleBiologist_Const.cs" />
     <Compile Include="LittleBiologist_Label.cs" />
     <Compile Include="LittleBiologist.cs" />

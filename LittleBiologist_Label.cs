@@ -30,7 +30,10 @@ namespace LittleBiologist
                     {
                         for(int i = labels.Count - 1;i >= 0;i--)
                         {
-                            labels[i].Destory();
+                            if(labels[i].region != value)
+                            {
+                                labels[i].Destory();
+                            }
                         }
                     }
                 }
@@ -39,17 +42,17 @@ namespace LittleBiologist
         public static List<LittleBiologist_Label> labels = new List<LittleBiologist_Label>();
 
         //基础信息
-        public Creature creature;
+        public Region region;
         public AbstractCreature abstractCreature;
 
         //标签信息
-        public InfoLabel infoLabel;
         public bool revealed = false;   
 
         public LittleBiologist_Label(AbstractCreature abstractCreature)
         {
             this.abstractCreature = abstractCreature;
-
+            lastRegion = abstractCreature.Room.world.region;
+            region = lastRegion;
             Patch();
 
             if (abstractCreature.realizedCreature != null)
@@ -65,7 +68,6 @@ namespace LittleBiologist
         {
             if(abstractCreature.realizedCreature != null && abstractCreature.realizedCreature.graphicsModule != null && !abstractCreature.realizedCreature.inShortcut)
             {
-                
                 RevealLabel();
             }
             else
@@ -98,26 +100,70 @@ namespace LittleBiologist
         }
         public void Destory()
         {
+            Log("Destroy Label for", abstractCreature);
             DisPatch();
             labels.Remove(this);
         }
 
         void DisPatch()
         {
+            On.Room.AddObject -= Room_AddObject;
+            On.UpdatableAndDeletable.Destroy -= UpdatableAndDeletable_Destroy;
+
+            On.AbstractWorldEntity.Destroy -= AbstractWorldEntity_Destroy;
         }
 
         void Patch()
         {
+            //标签
             On.Room.AddObject += Room_AddObject;
+            On.UpdatableAndDeletable.Destroy += UpdatableAndDeletable_Destroy;
+
+            //本体
+            On.AbstractWorldEntity.Destroy += AbstractWorldEntity_Destroy;
+        }
+
+        private void AbstractWorldEntity_Destroy(On.AbstractWorldEntity.orig_Destroy orig, AbstractWorldEntity self)
+        {
+            if(self is AbstractCreature)
+            {
+                if((self as AbstractCreature) == abstractCreature)
+                {
+                    Destory();
+                }
+            }
+            orig.Invoke(self);
+        }
+
+        private void UpdatableAndDeletable_Destroy(On.UpdatableAndDeletable.orig_Destroy orig, UpdatableAndDeletable self)
+        {
+            if(self is Creature)
+            {
+                if ((self as Creature).abstractCreature == abstractCreature)
+                {
+                    if ((self as Creature).room == LittleBiologist.currentCamera.room && (self as Creature).graphicsModule != null)
+                    {
+                        LittleBiologist.instance.StartCoroutine(Late_Creature_Die((self as Creature).graphicsModule));
+                    }
+                }
+            }
+            orig.Invoke(self);
         }
 
         private void Room_AddObject(On.Room.orig_AddObject orig, Room self, UpdatableAndDeletable obj)
         {
             orig.Invoke(self, obj);
 
-            if(obj is Creature)
+            LittleBiologist.instance.StartCoroutine(Late_Room_AddObject(self,obj));
+        }
+
+        public IEnumerator Late_Room_AddObject(Room self, UpdatableAndDeletable obj)
+        {
+            yield return new WaitForEndOfFrame();
+
+            if (obj is Creature)
             {
-                if((obj as Creature).abstractCreature == abstractCreature)
+                if ((obj as Creature).abstractCreature == abstractCreature)
                 {
                     if (self != LittleBiologist.currentCamera.room)
                     {
@@ -130,98 +176,18 @@ namespace LittleBiologist
                 }
             }
         }
-    }
 
-    public class InfoLabel : CosmeticSprite
-    {
-        //基础信息
-        public LittleBiologist_Label owner;
-
-        public FLabel label;
-        public RoomCamera.SpriteLeaser leaser;
-        public RoomCamera camera;
-
-        public List<FSprite> sprites = new List<FSprite>();
-        public bool changeSprites = false;
-
-        //基础字段
-        Vector2 _pos;
-        public Vector2 pos
+        public IEnumerator Late_Creature_Die(GraphicsModule graphicsModule)
         {
-            get { return _pos; }
-            set
+            for(int i = 0;i < 3; i++)
             {
-                _pos = value;
+                yield return new WaitForFixedUpdate();
             }
-        }
-
-        string _text;
-        public string text
-        {
-            get
-            {
-                return _text;
-            }
-            set
-            {
-                if(value != _text)
-                {
-                    _text = value;
-                    if(label != null)
-                    {
-                        label.text = value;
-                    }
-                }
-            }
-        }
-
-        public InfoLabel(LittleBiologist_Label owner, string text)
-        {
-            this.owner = owner;
-            this.text = text;
-        }
-
-        public override void InitiateSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
-        {
-            leaser = sLeaser;
-            camera = rCam;
             
-            label = new FLabel("DisplayFont", text) { scale = 0.6f};
-
-            leaser.sprites = sprites.ToArray();
-            AddToContainer(leaser, rCam,null);
-        }
-        public override void AddToContainer(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer newContatiner)
-        {
-            
-            base.AddToContainer(leaser, rCam, null);
-            label.RemoveFromContainer();
-            rCam.ReturnFContainer("HUD").AddChild(label);
-        }
-
-        public override void DrawSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
-        {
-            base.DrawSprites(leaser, rCam, timeStacker, camPos);
-        }
-
-        public override void Update(bool eu)
-        {
-            if (changeSprites)
+            if (!LittleBiologist.currentCamera.room.drawableObjects.Contains(graphicsModule))
             {
-                changeSprites = false;
-                leaser.sprites = sprites.ToArray();
+                HideLabel();
             }
-
-            label.SetPosition(owner.creature.mainBodyChunk.pos - camera.pos);
-
-        }
-        public override void Destroy()
-        {
-            owner.infoLabel = null;
-            label.RemoveFromContainer();
-            RemoveFromRoom();
-
-            base.Destroy();
         }
     }
 }
