@@ -7,10 +7,12 @@ using UnityEngine;
 
 namespace LittleBiologist
 {
-    public static class LittleBiologist_Const
+    public static class LBio_Const
     {
+        public static bool UsingLog = true;
         public static void Log(params object[] args)
         {
+            if (!UsingLog) { return; }
             string result = "[LittleBiologist]";
 
             if (args.Length > 0)

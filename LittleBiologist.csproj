@@ -60,8 +60,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="LittleBiologist_ModulePatch.cs" />
+    <Compile Include="LBio_Patch.cs" />
     <Compile Include="LittleBiologist_HUD.cs" />
-    <Compile Include="LittleBiologist_Const.cs" />
+    <Compile Include="LBio_Const.cs" />
     <Compile Include="LittleBiologist_Label.cs" />
     <Compile Include="LittleBiologist.cs" />
   </ItemGroup>
