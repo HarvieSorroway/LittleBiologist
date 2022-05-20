@@ -31,8 +31,12 @@ namespace LittleBiologist
         #region 基础信息部分
         public void Update()
         {
-            creaturePos = creature.mainBodyChunk.pos;
+            if (!isHanging)
+            {
+                creaturePos = creature.mainBodyChunk.pos;
+            }
             Reveal = !creature.inShortcut;
+            lBio_LabelPages[indexer].UpdateText();
         }
 
         public void Destroy()
@@ -62,9 +66,10 @@ namespace LittleBiologist
             {
                 lBio_CreatureLabels[i].RealDestroy();
             }
+            LBio_InfoMemories.Clear();
         }
 
-        string basicName;
+        internal string basicName;
         WeakReference _creature;
         public Creature creature
         {
@@ -96,5 +101,54 @@ namespace LittleBiologist
         }
 
         #endregion
+
+        public class LBio_LabelPage
+        {
+            public LBio_LabelPage(LBio_CreatureLabel owner)
+            {
+                this.owner = owner;
+            }
+
+            public LBio_CreatureLabel owner;
+
+            public virtual void UpdateText()
+            {
+
+            }
+
+            public virtual string GetText()
+            {
+                return owner.creature.abstractCreature.ID.number.ToString();
+            }
+
+            public virtual Color GetColor()
+            {
+                return Color.gray;
+            }
+            public virtual void SwitchLocalPage()
+            {
+                int temp = localPageIndex;
+                localPageIndex++;
+                if(localPageIndex > maxLocalPageIndex)
+                {
+                    localPageIndex = 0;
+                }
+                if(temp != localPageIndex)
+                {
+                    owner.localTextChangeProcess = 0f;
+                }
+            }
+
+            public virtual void SetLocalPage(int value)
+            {
+                if(value <= maxLocalPageIndex && value >= 0)
+                {
+                    localPageIndex = value;
+                }
+            }
+
+            public int localPageIndex = 0;
+            public virtual int maxLocalPageIndex => 0;
+        }
     }
 }

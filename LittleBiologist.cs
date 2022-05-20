@@ -32,6 +32,10 @@ namespace LittleBiologist
             On.Creature.Update += Creature_Update;
         }
 
+        public void Update()
+        {
+            LBio_CreatureLabel.GetHanging_or_MouseOver_Label();
+        }
         private void Creature_Update(On.Creature.orig_Update orig, Creature self, bool eu)
         {
             orig.Invoke(self,eu);

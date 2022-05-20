@@ -60,6 +60,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="LBio_LabelPages.cs" />
     <Compile Include="LittleBiologist_ModulePatch.cs" />
     <Compile Include="LBio_Patch.cs" />
     <Compile Include="LittleBiologist_HUD.cs" />
