@@ -68,22 +68,24 @@ namespace LittleBiologist
         /// </summary>
         public void InitSprites()
         {
-            string text = lBio_CreatureLabels.IndexOf(this).ToString() + " - " + creature.abstractCreature.ID.number.ToString();
-            connectLine = new CustomFSprite("Futile_White");
-            background = new FSprite("pixel", true) { scaleX = text.Length * 7f, scaleY = 10f, color = Color.black };
+            connectLine = new CustomFSprite("pixel");
+            background = new FSprite("pixel", true);
 
+            //设置图表灯
             IconSymbol.IconSymbolData iconSymbol = new IconSymbol.IconSymbolData(creature.abstractCreature.creatureTemplate.type, creature.abstractCreature.type, 0);
             icon = new FSprite(CreatureSymbol.SpriteNameOfCreature(iconSymbol), true) { color = CreatureSymbol.ColorOfCreature(iconSymbol)};
             iconFlash = new FSprite("Futile_White", true) { shader = rCam.game.rainWorld.Shaders["FlatLight"], color = CreatureSymbol.ColorOfCreature(iconSymbol), alpha = 0.6f, scale = 3 };
+            iconShadow = new FSprite("Futile_White", true) { shader = rCam.game.rainWorld.Shaders["FlatLight"], color = Color.black };
 
             LBio_HUD.AddNodeToContainer(connectLine, 0);
             LBio_HUD.AddNodeToContainer(background , 0);
             LBio_HUD.AddNodeToContainer(iconFlash  , 0);
+            LBio_HUD.AddNodeToContainer(iconShadow , 0);
             LBio_HUD.AddNodeToContainer(icon       , 0);
 
             for (int i = 0; i < fLabel.Length; i++)
             {
-                fLabel[i] = new FLabel("font", text + " - " + i.ToString()) {alpha = 0f, scaleX = 0f };
+                fLabel[i] = new FLabel("font","") {alpha = 0f, scaleX = 0f};
                 LBio_HUD.AddNodeToContainer(fLabel[i], 0);
             }
 
@@ -99,24 +101,19 @@ namespace LittleBiologist
                 if (isHanging)
                 {
                     ScreenPos = lBio_InfoMemory.screenPos;
-                }
-                else
-                {
-                    creaturePos = creature.mainBodyChunk.pos;
-                }
-                lastCreaturePos = creaturePos;
-                smoothCreaturePos = creaturePos;
 
-                alpha = isShowing ? 1 : 0;
-                lastAlpha = alpha;
-                smoothAlpha = alpha;
+                    alpha = isShowing ? 1 : 0;
+                    lastAlpha = alpha;
+                    smoothAlpha = alpha;
 
-                if (isHanging)
-                {
                     isShowing = lBio_InfoMemory.isShowing;
                     indexer = lBio_InfoMemory.indexer;
                     smoothInderxer = indexer;
                     lastInderxer = indexer;
+                }
+                else
+                {
+                    creaturePos = creature.mainBodyChunk.pos;
                 }
 
                 lBio_LabelPages[indexer].SetLocalPage(lBio_InfoMemory.localPageIndex);
@@ -124,20 +121,31 @@ namespace LittleBiologist
             else
             {
                 creaturePos = creature.mainBodyChunk.pos;
-                lastCreaturePos = creaturePos;
-                smoothCreaturePos = creaturePos;
-
                 LBio_InfoMemories.Add(basicName, new LBio_InfoMemory());
             }
 
+            lastCreaturePos = creaturePos;
+            smoothCreaturePos = creaturePos;
+
             lastBackgroundColor = lBio_LabelPages[indexer].GetColor();
             smoothBackgroundColor = lBio_LabelPages[indexer].GetColor();
+
+            initSuccessfully = LBio_HUD.instance != null;
         }
 
         public void InitLabelPages()
         {
             lBio_LabelPages.Add(new LBioPage_ShowID(this));
             lBio_LabelPages.Add(new LBioPage_ShowPersonality(this));
+            lBio_LabelPages.Add(new LBioPage_ShowRelationship(this));
+        }
+
+        public void ResetLocalPages()
+        {
+            foreach(var page in lBio_LabelPages)
+            {
+                page.ResetLocal();
+            }
         }
         /// <summary>
         /// 绘制，由LBio_HUDPart调用
@@ -166,7 +174,7 @@ namespace LittleBiologist
                 lastShowingZoom = smoothShowingZoom;
 
                 smoothAlpha *= smoothShowingZoom;
-                size = fLabel[Mathf.RoundToInt(smoothInderxer)].textRect.size + Vector2.one * 10f * zoom;
+                size = fLabel[Mathf.RoundToInt(smoothInderxer)].textRect.size * 0.6f * zoom + Vector2.one * 10f * zoom * 0.6f;
 
                 smoothPlayerRelativeVector = Vector2.Lerp(lastPlayerRelativeVector, playerRelativeVector, 0.1f);
                 lastPlayerRelativeVector = smoothPlayerRelativeVector;
@@ -180,10 +188,14 @@ namespace LittleBiologist
 
                 if (rCam != null)
                 {
-                    Color reverseCol = rCam.PixelColorAtCoordinate(background.GetPosition() + rCam.pos);
+                    Color reverseCol = rCam.PixelColorAtCoordinate(background.GetPosition() + new Vector2(background.scaleX / 2 , background.scaleY / 2) + rCam.pos) / 5;
+                    reverseCol += rCam.PixelColorAtCoordinate(background.GetPosition() + new Vector2(-background.scaleX / 2, background.scaleY / 2) + rCam.pos) / 5;
+                    reverseCol += rCam.PixelColorAtCoordinate(background.GetPosition() + new Vector2(background.scaleX / 2, -background.scaleY / 2) + rCam.pos) / 5;
+                    reverseCol += rCam.PixelColorAtCoordinate(background.GetPosition() + new Vector2(-background.scaleX / 2, -background.scaleY / 2) + rCam.pos) / 5;
+                    reverseCol += rCam.PixelColorAtCoordinate(background.GetPosition() + rCam.pos) / 5f;
                     reverseCol.a = aimColor.a;
-
                     reverseCol = Color.Lerp(reverseCol, new Color(1 - reverseCol.r, 1 - reverseCol.g, 1 - reverseCol.b, aimColor.a), reverseCol.grayscale * reverseCol.grayscale);
+
                     aimColor = Color.Lerp(aimColor, reverseCol, 0.65f);
                 };
                 
@@ -192,6 +204,7 @@ namespace LittleBiologist
 
                 icon.scale = smoothShowingZoom;
                 iconFlash.scale = icon.localRect.size.x / 5 * smoothShowingZoom;
+                iconShadow.scale = icon.scale * 3f;
 
                 //背景更新
                 if (!slatedForDeletion)
@@ -222,13 +235,14 @@ namespace LittleBiologist
                             playerRelativeVector = Vector2.up;
                         }
 
-                        float length = Mathf.Max(background.scaleX, background.scaleY) + 30f;
+                        float length = (new Vector2(background.scaleX, background.scaleY)).magnitude / 2 + 20f;
                         playerRelativeVector *= length * smoothShowingZoom;
                     }
 
                     background.SetPosition(ScreenPos + Vector2.up * ((icon.localRect.size.y + 2f) / 2) * smoothShowingZoom + Vector2.right * (-(icon.localRect.size.x + 2f) / 2) * smoothShowingZoom + smoothPlayerRelativeVector);
                     icon.SetPosition(new Vector2(background.x - background.scaleX / 2f + icon.localRect.size.x / 2f + 2f, background.y + background.scaleY / 2f - icon.localRect.size.y / 2 - 2f));
-                    iconFlash.SetPosition(new Vector2(icon.x + 1f, icon.y - 1.5f));
+                    iconFlash.SetPosition(icon.GetPosition());
+                    iconShadow.SetPosition(icon.GetPosition());
 
                     //Caculate lineConnection
                     Vector2 temp = (creature.mainBodyChunk.pos - rCam.pos - new Vector2(background.x, background.y)).normalized;
@@ -252,8 +266,8 @@ namespace LittleBiologist
 
                 background.alpha = smoothAlpha;
                 icon.alpha = smoothAlpha;
-                iconFlash.alpha = 0.6f * smoothAlpha;
-                connectLine.alpha = smoothAlpha;
+                iconFlash.alpha = 0.8f * smoothAlpha * ((creature != null && creature.dead) ? 0f : 1f);
+                iconShadow.alpha = smoothAlpha * 0.8f;
 
                 background.color = smoothBackgroundColor;
 
@@ -288,9 +302,9 @@ namespace LittleBiologist
                         float scaleCoeffcient = Mathf.Sin(Mathf.Lerp(0f, Mathf.PI, smoothInderxer - i + 0.5f));
                         float posCoefficient = Mathf.Cos(Mathf.Lerp(0f, Mathf.PI, smoothInderxer - i + 0.5f));
 
-                        fLabel[i].scaleX = scaleCoeffcient * smoothShowingZoom;
-                        fLabel[i].scaleY = smoothShowingZoom;
-                        fLabel[i].alpha = smoothAlpha * localTextChangeAlpha * smoothShowingZoom;
+                        fLabel[i].scaleX = scaleCoeffcient * smoothShowingZoom * 0.6f;
+                        fLabel[i].scaleY = smoothShowingZoom * 0.6f;
+                        fLabel[i].alpha = smoothAlpha * localTextChangeAlpha * smoothShowingZoom * scaleCoeffcient;
 
                         if (!slatedForDeletion)
                         {
@@ -352,11 +366,11 @@ namespace LittleBiologist
         {
             foreach(var otherLabel in lBio_CreatureLabels)
             {
-                if(otherLabel != this && Vector2.Distance(otherLabel.smoothCreaturePos, smoothCreaturePos) < (otherLabel.background.scaleX + otherLabel.background.scaleY + background.scaleX + background.scaleY))
+                if(otherLabel != this && Vector2.Distance(otherLabel.smoothCreaturePos, smoothCreaturePos) < (otherLabel.background.scaleX + otherLabel.background.scaleY + background.scaleX + background.scaleY) / 2f)
                 {
                     Vector2 forceDir = (smoothCreaturePos - otherLabel.smoothCreaturePos).normalized;
-                    float coef = 100 / (smoothCreaturePos - otherLabel.smoothCreaturePos).magnitude;
-                    Vector2 force = forceDir * Mathf.Clamp(coef * coef, 0f, 500f);
+                    float coef = 200 / (smoothCreaturePos - otherLabel.smoothCreaturePos).magnitude;
+                    Vector2 force = forceDir * Mathf.Clamp(coef * coef, 0f, 800f);
                     pushForce += force;
                 }
             }
@@ -366,15 +380,18 @@ namespace LittleBiologist
         /// </summary>
         public void RemoveSprites()
         {
-            for (int i = 0; i < fLabel.Length; i++)
+            if (initSuccessfully)
             {
-                LBio_HUD.RemoveNodeFromContainer(fLabel[i]);
+                for (int i = 0; i < fLabel.Length; i++)
+                {
+                    LBio_HUD.RemoveNodeFromContainer(fLabel[i]);
+                }
+                LBio_HUD.RemoveNodeFromContainer(background);
+                LBio_HUD.RemoveNodeFromContainer(icon);
+                LBio_HUD.RemoveNodeFromContainer(iconFlash);
+                LBio_HUD.RemoveNodeFromContainer(iconShadow);
+                LBio_HUD.RemoveNodeFromContainer(connectLine);
             }
-            LBio_HUD.RemoveNodeFromContainer(background);
-            LBio_HUD.RemoveNodeFromContainer(icon);
-            LBio_HUD.RemoveNodeFromContainer(iconFlash);
-            LBio_HUD.RemoveNodeFromContainer(connectLine);
-
         }
 
         List<LBio_LabelPage> lBio_LabelPages = new List<LBio_LabelPage>();
@@ -435,8 +452,9 @@ namespace LittleBiologist
         Vector2 smoothSize = Vector2.zero;
 
         Vector2 pushForce = Vector2.zero;
-        
 
+
+        bool initSuccessfully = false;
         bool _slatedForDeletion = false;
         /// <summary>
         /// 设置标签状态为删除
@@ -513,6 +531,7 @@ namespace LittleBiologist
         /// 图标闪光
         /// </summary>
         FSprite iconFlash;
+        FSprite iconShadow;
 
         #region hanging
         /// <summary>
@@ -522,7 +541,7 @@ namespace LittleBiologist
         {
             get
             {
-                return (isHanging? 1.5f : 1f) * (currentMouseOverLabel == this ? 1.5f : 1f);
+                return (isHanging? 1.1f : 1f) * (currentMouseOverLabel == this ? 1.1f : 1f);
             }
         }
 
@@ -532,11 +551,11 @@ namespace LittleBiologist
             get => _isHanging;
             set
             {
-                _isHanging = value;
-                if (value)
+                if (value && _isHanging != value)
                 {
-                    ScreenPos = creaturePos - rCam.pos;
+                    ScreenPos = smoothCreaturePos - rCam.pos;
                 }
+                _isHanging = value;
             }
         }
         public bool isShowing = totalShowing; //是否显示
@@ -573,14 +592,18 @@ namespace LittleBiologist
             get => _totalIndexer;
             set
             {
-                if(value != totalIndexer)
+                if(value != _totalIndexer)
                 {
                     for (int i = 0; i < lBio_CreatureLabels.Count; i++)
                     {
-                        lBio_CreatureLabels[i].SwitchPages(value);
+                        lBio_CreatureLabels[i].ResetLocalPages();
                     }
-                    _totalIndexer = value;
                 }
+                for (int i = 0; i < lBio_CreatureLabels.Count; i++)
+                {
+                    lBio_CreatureLabels[i].SwitchPages(value);
+                }
+                _totalIndexer = value;
             }
         }
 
@@ -641,12 +664,16 @@ namespace LittleBiologist
 
                 if (Input.GetMouseButton(0))
                 {
-                    if(Time.time - clickTime > 0.15f)
+                    Vector2 deltaMousePos = mousePos - mousePosLastFrame;
+                    mousePosLastFrame = mousePos;
+
+                    if (Time.time - clickTime > 0.15f)
                     {
+                        if (currentMouseOverLabel.isHanging)
+                        {
+                            currentMouseOverLabel.ScreenPos += deltaMousePos;
+                        }
                         currentMouseOverLabel.isHanging = true;
-                        Vector2 deltaMousePos = mousePos - mousePosLastFrame;
-                        currentMouseOverLabel.ScreenPos += deltaMousePos;
-                        mousePosLastFrame = mousePos;
                     }
                 }
 

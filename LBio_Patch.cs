@@ -23,7 +23,14 @@ namespace LittleBiologist
                         return LBio_CreatureLabel.lBio_CreatureLabels[i];
                     }
                 }
-                return new LBio_CreatureLabel(creature);
+                if(LBio_HUD.instance != null)
+                {
+                    return new LBio_CreatureLabel(creature);
+                }
+                else
+                {
+                    return null;
+                }
             }
             else
             {

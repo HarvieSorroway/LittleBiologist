@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>LittleBiologist</RootNamespace>
     <AssemblyName>LittleBiologist</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
@@ -60,6 +60,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="LBio_LabelConfig.cs" />
     <Compile Include="LBio_LabelPages.cs" />
     <Compile Include="LittleBiologist_ModulePatch.cs" />
     <Compile Include="LBio_Patch.cs" />

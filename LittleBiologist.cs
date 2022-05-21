@@ -11,7 +11,7 @@ using static LittleBiologist.LBio_Const;
 
 namespace LittleBiologist
 {
-    [BepInPlugin("Harvie.LittleBiologist", "LittleBiologist", "2.0.0")]
+    [BepInPlugin("Harvie.LittleBiologist", "LittleBiologist", "2.3.0")]
     public class LittleBiologist : BaseUnityPlugin
     {
         public static LittleBiologist instance;
@@ -30,6 +30,8 @@ namespace LittleBiologist
             On.HUD.HUD.InitSinglePlayerHud += HUD_InitSinglePlayerHud;
 
             On.Creature.Update += Creature_Update;
+
+            LBio_LabelConfig.SetupConfig();
         }
 
         public void Update()

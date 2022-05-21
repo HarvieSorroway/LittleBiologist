@@ -24,6 +24,7 @@ namespace LittleBiologist
             lBio_CreatureLabels.Add(this);
             basicName = creature.ToString();
             Log("Add Creature",creature);
+
             InitSprites();
         }
 
@@ -118,7 +119,7 @@ namespace LittleBiologist
 
             public virtual string GetText()
             {
-                return owner.creature.abstractCreature.ID.number.ToString();
+                return owner.creature.abstractCreature.ID.ToString();
             }
 
             public virtual Color GetColor()
@@ -136,6 +137,14 @@ namespace LittleBiologist
                 if(temp != localPageIndex)
                 {
                     owner.localTextChangeProcess = 0f;
+                }
+            }
+
+            public virtual void ResetLocal()
+            {
+                if (!owner.isHanging)
+                {
+                    localPageIndex = 0;
                 }
             }
 
