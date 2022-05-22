@@ -60,13 +60,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LBio_LabelConfig.cs" />
-    <Compile Include="LBio_LabelPages.cs" />
+    <Compile Include="LBio_Labels\LBio_LabelConfig.cs" />
+    <Compile Include="LBio_Labels\LBio_LabelPages.cs" />
+    <Compile Include="LBio_Navigations\LBio_NavigationCore.cs" />
+    <Compile Include="LBio_Navigations\LBio_NaviHUD.cs" />
     <Compile Include="LittleBiologist_ModulePatch.cs" />
-    <Compile Include="LBio_Patch.cs" />
     <Compile Include="LittleBiologist_HUD.cs" />
     <Compile Include="LBio_Const.cs" />
-    <Compile Include="LittleBiologist_Label.cs" />
+    <Compile Include="LBio_Labels\LittleBiologist_Label.cs" />
     <Compile Include="LittleBiologist.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

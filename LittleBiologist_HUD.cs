@@ -8,6 +8,8 @@ using RWCustom;
 using UnityEngine;
 using static LittleBiologist.LBio_Const;
 using Random = UnityEngine.Random;
+using LittleBiologist.LBio_Navigations;
+
 
 namespace LittleBiologist
 {
@@ -19,6 +21,7 @@ namespace LittleBiologist
         {
             baseColor = new Color(Random.value, Random.value, Random.value);
             instance = this;
+            LBio_NaviHUD = new LBio_NaviHUD();
         }
 
         public override void Draw(float timeStacker)
@@ -28,12 +31,14 @@ namespace LittleBiologist
             {
                 lBio_CreatureLabels[i].Draw();
             }
+            LBio_NaviHUD.Draw();
         }
 
         public override void ClearSprites()
         {
             instance = null;
 
+            LBio_NaviHUD.RemoveSprites();
             LBio_CreatureLabel.RealDestroyAll();
 
             base.ClearSprites();
@@ -58,6 +63,7 @@ namespace LittleBiologist
 
 
         public static Color baseColor = new Color(1,1,1);
+        LBio_NaviHUD LBio_NaviHUD;
         List<LBio_CreatureLabel> lBio_CreatureLabels => LBio_CreatureLabel.lBio_CreatureLabels;
     }
 

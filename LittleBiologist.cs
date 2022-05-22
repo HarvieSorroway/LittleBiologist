@@ -7,6 +7,7 @@ using System.Reflection;
 using UnityEngine;
 using System.Collections;
 using static LittleBiologist.LBio_Const;
+using LittleBiologist.LBio_Navigations;
 
 
 namespace LittleBiologist
@@ -30,8 +31,40 @@ namespace LittleBiologist
             On.HUD.HUD.InitSinglePlayerHud += HUD_InitSinglePlayerHud;
 
             On.Creature.Update += Creature_Update;
+            On.AbstractCreature.Update += AbstractCreature_Update;
+            On.AbstractCreature.InDenUpdate += AbstractCreature_InDenUpdate;
+            On.AbstractCreature.ctor += AbstractCreature_ctor;
 
             LBio_LabelConfig.SetupConfig();
+        }
+
+        private void AbstractCreature_ctor(On.AbstractCreature.orig_ctor orig, AbstractCreature self, World world, CreatureTemplate creatureTemplate, Creature realizedCreature, WorldCoordinate pos, EntityID ID)
+        {
+            orig.Invoke(self, world, creatureTemplate, realizedCreature, pos, ID);
+
+            StartCoroutine(late_CheckAbstractCreatureForHolder(self));
+        }
+
+        private void AbstractCreature_InDenUpdate(On.AbstractCreature.orig_InDenUpdate orig, AbstractCreature self, int time)
+        {
+            orig.Invoke(self, time);
+
+            LBio_Navigations.LBio_NaviHodler lBio_NaviHodler = self.GetModule();
+            if (lBio_NaviHodler != null)
+            {
+                lBio_NaviHodler.Update();
+            }
+        }
+
+        private void AbstractCreature_Update(On.AbstractCreature.orig_Update orig, AbstractCreature self, int time)
+        {
+            orig.Invoke(self, time);
+
+            LBio_Navigations.LBio_NaviHodler lBio_NaviHodler = self.GetModule();
+            if(lBio_NaviHodler != null)
+            {
+                lBio_NaviHodler.Update();
+            }
         }
 
         public void Update()
@@ -82,5 +115,11 @@ namespace LittleBiologist
             currentCamera = self;
         }
         #endregion
+
+        IEnumerator late_CheckAbstractCreatureForHolder(AbstractCreature abstractCreature)
+        {
+            yield return null;
+            abstractCreature.GetModule();
+        }
     }
 }
