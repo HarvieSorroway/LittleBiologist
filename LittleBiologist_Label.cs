@@ -6,188 +6,158 @@ using System.Text;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using System.Reflection;
-using static LittleBiologist.LittleBiologist_Const;
+using static LittleBiologist.LBio_Const;
 
 namespace LittleBiologist
 {
-    public class LittleBiologist_Label
+
+    /// <summary>
+    /// LBio_CreatureLable的基础信息部分，绘制部分位于HUD
+    /// </summary>
+    public partial class LBio_CreatureLabel
     {
-        //静态字段
-        static Region _lastRegion;
-        public static Region lastRegion
+        public static List<LBio_CreatureLabel> lBio_CreatureLabels = new List<LBio_CreatureLabel>();
+
+        public LBio_CreatureLabel(Creature creature)
+        {
+            this.creature = creature;
+            lBio_CreatureLabels.Add(this);
+            basicName = creature.ToString();
+            Log("Add Creature",creature);
+
+            InitSprites();
+        }
+
+        
+        #region 基础信息部分
+        public void Update()
+        {
+            if (!isHanging)
+            {
+                creaturePos = creature.mainBodyChunk.pos;
+            }
+            Reveal = !creature.inShortcut;
+            lBio_LabelPages[indexer].UpdateText();
+        }
+
+        public void Destroy()
+        {
+            slatedForDeletion = true;
+            creature = null;
+        }
+
+        public void RealDestroy()
+        {
+            Log("Remove creature " + basicName);
+            lBio_CreatureLabels.Remove(this);
+            RemoveSprites();
+        }
+
+        public static void DestroyAll()
+        {
+            for(int i = lBio_CreatureLabels.Count - 1;i >= 0; i--)
+            {
+                lBio_CreatureLabels[i].Destroy();
+            }
+        }
+
+        public static void RealDestroyAll()
+        {
+            for (int i = lBio_CreatureLabels.Count - 1; i >= 0; i--)
+            {
+                lBio_CreatureLabels[i].RealDestroy();
+            }
+            LBio_InfoMemories.Clear();
+        }
+
+        internal string basicName;
+        WeakReference _creature;
+        public Creature creature
         {
             get
             {
-                return _lastRegion;
-            }
-            set
-            {
-                if(_lastRegion != value)
+                if(_creature.Target == null || !_creature.IsAlive)
                 {
-                    _lastRegion = value;
-
-                    if(labels.Count > 0)
+                    Destroy();
+                    return null;
+                }
+                else
+                {
+                    Creature creature = _creature.Target as Creature;
+                    if (creature.InSameRoomWithCamera())
                     {
-                        for(int i = labels.Count - 1;i >= 0;i--)
-                        {
-                            if(labels[i].region != value)
-                            {
-                                labels[i].Destory();
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        public static List<LittleBiologist_Label> labels = new List<LittleBiologist_Label>();
-
-        //基础信息
-        public Region region;
-        public AbstractCreature abstractCreature;
-
-        //标签信息
-        public bool revealed = false;   
-
-        public LittleBiologist_Label(AbstractCreature abstractCreature)
-        {
-            this.abstractCreature = abstractCreature;
-            lastRegion = abstractCreature.Room.world.region;
-            region = lastRegion;
-            Patch();
-
-            if (abstractCreature.realizedCreature != null)
-            {
-                if(abstractCreature.realizedCreature.room != null && abstractCreature.realizedCreature.room == LittleBiologist.currentCamera.room)
-                {
-                    RevealLabel();
-                }
-            }
-        }
-
-        public void RegetLabel()
-        {
-            if(abstractCreature.realizedCreature != null && abstractCreature.realizedCreature.graphicsModule != null && !abstractCreature.realizedCreature.inShortcut)
-            {
-                RevealLabel();
-            }
-            else
-            {
-                HideLabel();
-            }
-        }
-
-        public void RevealLabel()
-        {
-            if (!revealed)
-            {
-                revealed = true;
-                Log("Reaval Label for", abstractCreature);
-            }
-        }
-
-        public void HideLabel()
-        {
-            if (revealed)
-            {
-                revealed = false;
-                Log("Hide Label for", abstractCreature);
-            }
-        }
-
-        public void RemoveLabel()
-        {
-            Log("Remove Label for", abstractCreature);
-        }
-        public void Destory()
-        {
-            Log("Destroy Label for", abstractCreature);
-            DisPatch();
-            labels.Remove(this);
-        }
-
-        void DisPatch()
-        {
-            On.Room.AddObject -= Room_AddObject;
-            On.UpdatableAndDeletable.Destroy -= UpdatableAndDeletable_Destroy;
-
-            On.AbstractWorldEntity.Destroy -= AbstractWorldEntity_Destroy;
-        }
-
-        void Patch()
-        {
-            //标签
-            On.Room.AddObject += Room_AddObject;
-            On.UpdatableAndDeletable.Destroy += UpdatableAndDeletable_Destroy;
-
-            //本体
-            On.AbstractWorldEntity.Destroy += AbstractWorldEntity_Destroy;
-        }
-
-        private void AbstractWorldEntity_Destroy(On.AbstractWorldEntity.orig_Destroy orig, AbstractWorldEntity self)
-        {
-            if(self is AbstractCreature)
-            {
-                if((self as AbstractCreature) == abstractCreature)
-                {
-                    Destory();
-                }
-            }
-            orig.Invoke(self);
-        }
-
-        private void UpdatableAndDeletable_Destroy(On.UpdatableAndDeletable.orig_Destroy orig, UpdatableAndDeletable self)
-        {
-            if(self is Creature)
-            {
-                if ((self as Creature).abstractCreature == abstractCreature)
-                {
-                    if ((self as Creature).room == LittleBiologist.currentCamera.room && (self as Creature).graphicsModule != null)
-                    {
-                        LittleBiologist.instance.StartCoroutine(Late_Creature_Die((self as Creature).graphicsModule));
-                    }
-                }
-            }
-            orig.Invoke(self);
-        }
-
-        private void Room_AddObject(On.Room.orig_AddObject orig, Room self, UpdatableAndDeletable obj)
-        {
-            orig.Invoke(self, obj);
-
-            LittleBiologist.instance.StartCoroutine(Late_Room_AddObject(self,obj));
-        }
-
-        public IEnumerator Late_Room_AddObject(Room self, UpdatableAndDeletable obj)
-        {
-            yield return new WaitForEndOfFrame();
-
-            if (obj is Creature)
-            {
-                if ((obj as Creature).abstractCreature == abstractCreature)
-                {
-                    if (self != LittleBiologist.currentCamera.room)
-                    {
-                        HideLabel();
+                        return _creature.Target as Creature;
                     }
                     else
                     {
-                        RevealLabel();
+                        Destroy();
+                        return null;
                     }
                 }
             }
+            set
+            {
+                _creature = new WeakReference(value);
+            }
         }
 
-        public IEnumerator Late_Creature_Die(GraphicsModule graphicsModule)
+        #endregion
+
+        public class LBio_LabelPage
         {
-            for(int i = 0;i < 3; i++)
+            public LBio_LabelPage(LBio_CreatureLabel owner)
             {
-                yield return new WaitForFixedUpdate();
+                this.owner = owner;
             }
-            
-            if (!LittleBiologist.currentCamera.room.drawableObjects.Contains(graphicsModule))
+
+            public LBio_CreatureLabel owner;
+
+            public virtual void UpdateText()
             {
-                HideLabel();
+
             }
+
+            public virtual string GetText()
+            {
+                return owner.creature.abstractCreature.ID.ToString();
+            }
+
+            public virtual Color GetColor()
+            {
+                return Color.gray;
+            }
+            public virtual void SwitchLocalPage()
+            {
+                int temp = localPageIndex;
+                localPageIndex++;
+                if(localPageIndex > maxLocalPageIndex)
+                {
+                    localPageIndex = 0;
+                }
+                if(temp != localPageIndex)
+                {
+                    owner.localTextChangeProcess = 0f;
+                }
+            }
+
+            public virtual void ResetLocal()
+            {
+                if (!owner.isHanging)
+                {
+                    localPageIndex = 0;
+                }
+            }
+
+            public virtual void SetLocalPage(int value)
+            {
+                if(value <= maxLocalPageIndex && value >= 0)
+                {
+                    localPageIndex = value;
+                }
+            }
+
+            public int localPageIndex = 0;
+            public virtual int maxLocalPageIndex => 0;
         }
     }
 }
