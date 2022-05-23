@@ -75,7 +75,7 @@ namespace LittleBiologist.LBio_Navigations
                     allHolders.Remove(type);
                 }
             }
-            catch(Exception e)
+            catch
             {
                 string allkey = "";
 
@@ -95,7 +95,7 @@ namespace LittleBiologist.LBio_Navigations
             this.owner = owner;
             this.Type = type;
 
-            InitSprites();
+            //InitSprites();
         }
 
         public void InitSprites()
@@ -110,7 +110,7 @@ namespace LittleBiologist.LBio_Navigations
 
         void Start()
         {
-            smoothPos = pos;
+            smoothPos = Pos;
             smoothPos.x = -20;
             lastPos = smoothPos;
         }
@@ -123,7 +123,7 @@ namespace LittleBiologist.LBio_Navigations
                 Start();
             }
 
-            smoothPos = Vector2.Lerp(lastPos, pos, 0.1f);
+            smoothPos = Vector2.Lerp(lastPos, Pos, 0.1f);
             lastPos = smoothPos;
 
             smoothAlpha = Mathf.Lerp(lastAlpha, alpha * life, 0.05f);
@@ -162,11 +162,11 @@ namespace LittleBiologist.LBio_Navigations
         }
 
 
-        Vector2 pos => new Vector2(40, 768 - index * 30 - 20f);
+        Vector2 Pos => new Vector2(40, 768 - Index * 30 - 20f);
         Vector2 lastPos;
         Vector2 smoothPos;
 
-        float alpha = 1f;
+        public float alpha = 1f;
         float lastAlpha = 0f;
         float smoothAlpha = 0f;
 
@@ -179,8 +179,8 @@ namespace LittleBiologist.LBio_Navigations
 
         public LBio_NaviHUD owner;
         public CreatureTemplate.Type Type;
-        public List<LBio_NaviHodler> myHolders => LBio_NaviHUD.allHolders[Type];
-        public int index => owner.allTypeHolders.IndexOf(this);
+        public List<LBio_NaviHodler> MyHolders => LBio_NaviHUD.allHolders[Type];
+        public int Index => owner.allTypeHolders.IndexOf(this);
     }
 
     public class LBio_NaviHodler
@@ -189,8 +189,8 @@ namespace LittleBiologist.LBio_Navigations
         public LBio_NaviHodler(AbstractCreature abstractCreature)
         {
             basciName = abstractCreature.ToString();
-            abCreature = abstractCreature;
-            Type = abCreature.creatureTemplate.type;
+            AbCreature = abstractCreature;
+            Type = AbCreature.creatureTemplate.type;
 
             allHolders.Add(this);
             LBio_NaviHUD.instance.AddNaviHolder(this);
@@ -217,7 +217,7 @@ namespace LittleBiologist.LBio_Navigations
         public string basciName;
         public CreatureTemplate.Type Type;
         WeakReference _abCreature;
-        public AbstractCreature abCreature
+        public AbstractCreature AbCreature
         {
             get
             {

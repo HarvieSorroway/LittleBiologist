@@ -20,7 +20,7 @@ namespace LittleBiologist
 
         public LBio_CreatureLabel(Creature creature)
         {
-            this.creature = creature;
+            this.Creature = creature;
             lBio_CreatureLabels.Add(this);
             basicName = creature.ToString();
             Log("Add Creature",creature);
@@ -32,18 +32,18 @@ namespace LittleBiologist
         #region 基础信息部分
         public void Update()
         {
-            if (!isHanging)
+            if (!IsHanging)
             {
-                creaturePos = creature.mainBodyChunk.pos;
+                creaturePos = Creature.mainBodyChunk.pos;
             }
-            Reveal = !creature.inShortcut;
-            lBio_LabelPages[indexer].UpdateText();
+            Reveal = !Creature.inShortcut;
+            lBio_LabelPages[Indexer].UpdateText();
         }
 
         public void Destroy()
         {
-            slatedForDeletion = true;
-            creature = null;
+            SlatedForDeletion = true;
+            Creature = null;
         }
 
         public void RealDestroy()
@@ -72,7 +72,7 @@ namespace LittleBiologist
 
         internal string basicName;
         WeakReference _creature;
-        public Creature creature
+        public Creature Creature
         {
             get
             {
@@ -119,7 +119,7 @@ namespace LittleBiologist
 
             public virtual string GetText()
             {
-                return owner.creature.abstractCreature.ID.ToString();
+                return owner.Creature.abstractCreature.ID.ToString();
             }
 
             public virtual Color GetColor()
@@ -130,7 +130,7 @@ namespace LittleBiologist
             {
                 int temp = localPageIndex;
                 localPageIndex++;
-                if(localPageIndex > maxLocalPageIndex)
+                if(localPageIndex > MaxLocalPageIndex)
                 {
                     localPageIndex = 0;
                 }
@@ -142,7 +142,7 @@ namespace LittleBiologist
 
             public virtual void ResetLocal()
             {
-                if (!owner.isHanging)
+                if (!owner.IsHanging)
                 {
                     localPageIndex = 0;
                 }
@@ -150,14 +150,14 @@ namespace LittleBiologist
 
             public virtual void SetLocalPage(int value)
             {
-                if(value <= maxLocalPageIndex && value >= 0)
+                if(value <= MaxLocalPageIndex && value >= 0)
                 {
                     localPageIndex = value;
                 }
             }
 
             public int localPageIndex = 0;
-            public virtual int maxLocalPageIndex => 0;
+            public virtual int MaxLocalPageIndex => 0;
         }
     }
 }

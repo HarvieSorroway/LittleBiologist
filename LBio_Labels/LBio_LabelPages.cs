@@ -20,11 +20,11 @@ namespace LittleBiologist
     {
         public LBioPage_ShowPersonality(LBio_CreatureLabel owner) : base(owner)
         {
-            AbstractCreature.Personality personality = owner.creature.abstractCreature.personality;
-            LBio_LabelConfig.LBio_CreatureConfig config = LBio_LabelConfig.GetConfig(owner.creature);
+            AbstractCreature.Personality personality = owner.Creature.abstractCreature.personality;
+            LBio_LabelConfig.LBio_CreatureConfig config = LBio_LabelConfig.GetConfig(owner.Creature);
             max = 1;
 
-            text += owner.creature.abstractCreature.ID.number.ToString() + "\n";
+            text += owner.Creature.abstractCreature.ID.number.ToString() + "\n";
             if (config.IOwnPersonality)
             {
                 text += config.UsingAggression ? String.Format("Aggression : {0:F2}\n", personality.aggression) : "";
@@ -42,9 +42,9 @@ namespace LittleBiologist
             if(config.IOwnSkills)
             {
 
-                Scavenger scavenger = owner.creature as Scavenger;
+                Scavenger scavenger = owner.Creature as Scavenger;
                 
-                text2 += owner.creature.abstractCreature.ID.number.ToString() +" Skills" + "\n";
+                text2 += owner.Creature.abstractCreature.ID.number.ToString() +" Skills" + "\n";
                 
                 text2 += String.Format("Blocking : {0:F2}\n", scavenger.blockingSkill);
                 text2 += String.Format("Dodge : {0:F2}\n", scavenger.dodgeSkill);
@@ -54,7 +54,7 @@ namespace LittleBiologist
             }
             else
             {
-                text2 += owner.creature.abstractCreature.ID.number.ToString() + "\n";
+                text2 += owner.Creature.abstractCreature.ID.number.ToString() + "\n";
                 text2 += "I don't have any skill";
             }
         }
@@ -79,7 +79,7 @@ namespace LittleBiologist
         string text = "";
         string text2 = "";
         int max = 0;
-        public override int maxLocalPageIndex => max;
+        public override int MaxLocalPageIndex => max;
     }
 
 
@@ -87,22 +87,22 @@ namespace LittleBiologist
     {
         public LBioPage_ShowRelationship(LBio_CreatureLabel owner) : base(owner)
         {
-            socialMemory = owner.creature.abstractCreature.state.socialMemory;
+            socialMemory = owner.Creature.abstractCreature.state.socialMemory;
 
-            title = owner.creature.abstractCreature.ID.number.ToString();
-            config = LBio_LabelConfig.GetConfig(owner.creature);
+            title = owner.Creature.abstractCreature.ID.number.ToString();
+            config = LBio_LabelConfig.GetConfig(owner.Creature);
         }
 
         public override void UpdateText()
         {
             if(localPageIndex == 0)
             {
-                if (owner.creature.room.game.Players.Count > 0 )
+                if (owner.Creature.room.game.Players.Count > 0 )
                 {
                     if (config.IOwnRelationship)
                     {
                         haveSlugcat = true;
-                        var social = socialMemory.GetOrInitiateRelationship(owner.creature.room.game.Players[0].ID);
+                        var social = socialMemory.GetOrInitiateRelationship(owner.Creature.room.game.Players[0].ID);
                         if (social != null)
                         {
                             haveSocial = true;
@@ -155,7 +155,7 @@ namespace LittleBiologist
                 }
                 else
                 {
-                    if (owner.creature.abstractCreature.creatureTemplate.type != CreatureTemplate.Type.Slugcat)
+                    if (owner.Creature.abstractCreature.creatureTemplate.type != CreatureTemplate.Type.Slugcat)
                     {
                         text += "\nNo slugcat found :s";
                     }
@@ -169,9 +169,9 @@ namespace LittleBiologist
             {
                 if (config.IOwnSquad)
                 {
-                    if (owner.creature != null)
+                    if (owner.Creature != null)
                     {
-                        Scavenger scavenger = owner.creature as Scavenger;
+                        Scavenger scavenger = owner.Creature as Scavenger;
 
                         if ((scavenger.abstractCreature.abstractAI as ScavengerAbstractAI).squad != null)
                         {
@@ -276,7 +276,8 @@ namespace LittleBiologist
 
         Color squadColor = Color.gray;
         Color currentColor => (config.IOwnSquad && localPageIndex == 1) ? squadColor :  Color.cyan * 0.8f;
-        SocialMemory socialMemory;
+
+        readonly SocialMemory socialMemory;
 
         string title = "";
 
@@ -287,7 +288,7 @@ namespace LittleBiologist
         float like = 0f;
         float tempLike = 0f;
 
-        public override int maxLocalPageIndex => 1;
+        public override int MaxLocalPageIndex => 1;
 
         LBio_LabelConfig.LBio_CreatureConfig config;
     }

@@ -15,7 +15,7 @@ namespace LittleBiologist
             {
                 for (int i = LBio_CreatureLabel.lBio_CreatureLabels.Count - 1; i >= 0; i--)
                 {
-                    if (LBio_CreatureLabel.lBio_CreatureLabels[i].creature == creature)
+                    if (LBio_CreatureLabel.lBio_CreatureLabels[i].Creature == creature)
                     {
 
                         return LBio_CreatureLabel.lBio_CreatureLabels[i];
@@ -42,7 +42,7 @@ namespace LittleBiologist
             {
                 for (int i = LBio_NaviHodler.allHolders.Count - 1; i >= 0; i--)
                 {
-                    if (LBio_NaviHodler.allHolders[i].abCreature == abstractCreature)
+                    if (LBio_NaviHodler.allHolders[i].AbCreature == abstractCreature)
                     {
                         return LBio_NaviHodler.allHolders[i];
                     }

@@ -27,11 +27,21 @@ namespace LittleBiologist
         public override void Draw(float timeStacker)
         {
             base.Draw(timeStacker);
-            for(int i = lBio_CreatureLabels.Count - 1;i >= 0; i--)
+            for(int i = LBio_CreatureLabels.Count - 1;i >= 0; i--)
             {
-                lBio_CreatureLabels[i].Draw();
+                LBio_CreatureLabels[i].Draw();
             }
             LBio_NaviHUD.Draw();
+
+            if (LBio_CreatureLabel.ChangeRoom)
+            {
+                
+                Room newRoom = LBio_NaviHodler.allHolders[0].AbCreature.Room.world.game.Players[0].Room.realizedRoom;
+                LBio_NaviHodler.allHolders[0].AbCreature.Room.world.game.cameras[0].MoveCamera(newRoom, 0);
+                LBio_NaviHodler.allHolders[0].AbCreature.Room.world.game.cameras[0].followAbstractCreature = LBio_NaviHodler.allHolders[0].AbCreature.Room.world.game.Players[0];
+
+                LBio_CreatureLabel.ChangeRoom = false;
+            }
         }
 
         public override void ClearSprites()
@@ -63,8 +73,8 @@ namespace LittleBiologist
 
 
         public static Color baseColor = new Color(1,1,1);
-        LBio_NaviHUD LBio_NaviHUD;
-        List<LBio_CreatureLabel> lBio_CreatureLabels => LBio_CreatureLabel.lBio_CreatureLabels;
+        readonly LBio_NaviHUD LBio_NaviHUD;
+        List<LBio_CreatureLabel> LBio_CreatureLabels => LBio_CreatureLabel.lBio_CreatureLabels;
     }
 
     public partial class LBio_CreatureLabel
@@ -78,7 +88,7 @@ namespace LittleBiologist
             background = new FSprite("pixel", true);
 
             //设置图表灯
-            IconSymbol.IconSymbolData iconSymbol = new IconSymbol.IconSymbolData(creature.abstractCreature.creatureTemplate.type, creature.abstractCreature.type, 0);
+            IconSymbol.IconSymbolData iconSymbol = new IconSymbol.IconSymbolData(Creature.abstractCreature.creatureTemplate.type, Creature.abstractCreature.type, 0);
             icon = new FSprite(CreatureSymbol.SpriteNameOfCreature(iconSymbol), true) { color = CreatureSymbol.ColorOfCreature(iconSymbol)};
             iconFlash = new FSprite("Futile_White", true) { shader = rCam.game.rainWorld.Shaders["FlatLight"], color = CreatureSymbol.ColorOfCreature(iconSymbol), alpha = 0.6f, scale = 3 };
             iconShadow = new FSprite("Futile_White", true) { shader = rCam.game.rainWorld.Shaders["FlatLight"], color = Color.black };
@@ -102,9 +112,9 @@ namespace LittleBiologist
                 LBio_InfoMemory lBio_InfoMemory = LBio_InfoMemories[basicName];
                 Log("Get LBio_InfoMemory for " + basicName, lBio_InfoMemory.screenPos, lBio_InfoMemory.isShowing, lBio_InfoMemory.isHanging, lBio_InfoMemory.indexer);
 
-                isHanging = lBio_InfoMemory.isHanging;
+                IsHanging = lBio_InfoMemory.isHanging;
 
-                if (isHanging)
+                if (IsHanging)
                 {
                     ScreenPos = lBio_InfoMemory.screenPos;
 
@@ -113,28 +123,28 @@ namespace LittleBiologist
                     smoothAlpha = alpha;
 
                     isShowing = lBio_InfoMemory.isShowing;
-                    indexer = lBio_InfoMemory.indexer;
-                    smoothInderxer = indexer;
-                    lastInderxer = indexer;
+                    Indexer = lBio_InfoMemory.indexer;
+                    smoothInderxer = Indexer;
+                    lastInderxer = Indexer;
                 }
                 else
                 {
-                    creaturePos = creature.mainBodyChunk.pos;
+                    creaturePos = Creature.mainBodyChunk.pos;
                 }
 
-                lBio_LabelPages[indexer].SetLocalPage(lBio_InfoMemory.localPageIndex);
+                lBio_LabelPages[Indexer].SetLocalPage(lBio_InfoMemory.localPageIndex);
             }
             else
             {
-                creaturePos = creature.mainBodyChunk.pos;
+                creaturePos = Creature.mainBodyChunk.pos;
                 LBio_InfoMemories.Add(basicName, new LBio_InfoMemory());
             }
 
             lastCreaturePos = creaturePos;
             smoothCreaturePos = creaturePos;
 
-            lastBackgroundColor = lBio_LabelPages[indexer].GetColor();
-            smoothBackgroundColor = lBio_LabelPages[indexer].GetColor();
+            lastBackgroundColor = lBio_LabelPages[Indexer].GetColor();
+            smoothBackgroundColor = lBio_LabelPages[Indexer].GetColor();
 
             initSuccessfully = LBio_HUD.instance != null;
         }
@@ -158,29 +168,38 @@ namespace LittleBiologist
         /// </summary>
         public void Draw()
         {
-            if (rCam != null || slatedForDeletion)
+            if (rCam != null || SlatedForDeletion)
             {
                 CollisionDetection();
 
+                //followFlash
+                if(rCam != null && Creature != null)
+                {
+                    if(rCam.followAbstractCreature == Creature.abstractCreature)
+                    {
+                        Flash();
+                    }
+                }
+
                 //smooth caculate
-                smoothCreaturePos = Vector2.Lerp(lastCreaturePos, creaturePos + (isHanging ? Vector2.zero : pushForce), 0.1f);
+                smoothCreaturePos = Vector2.Lerp(lastCreaturePos, creaturePos + (IsHanging ? Vector2.zero : pushForce), 0.1f);
                 lastCreaturePos = smoothCreaturePos;
                 pushForce = Vector2.Lerp(pushForce, Vector2.zero, 0.1f);
 
                 smoothAlpha = Mathf.Lerp(lastAlpha, alpha, 0.1f);
                 lastAlpha = smoothAlpha;
                 
-                smoothInderxer = Mathf.Lerp(lastInderxer, (float)indexer, 0.1f);
+                smoothInderxer = Mathf.Lerp(lastInderxer, (float)Indexer, 0.1f);
                 lastInderxer = smoothInderxer;
 
                 smoothSize = Vector2.Lerp(lastSize, size, 0.1f);
                 lastSize = smoothSize;
 
-                smoothShowingZoom = Mathf.Lerp(lastShowingZoom, showingZoom, 0.1f);
+                smoothShowingZoom = Mathf.Lerp(lastShowingZoom, ShowingZoom, 0.1f);
                 lastShowingZoom = smoothShowingZoom;
 
                 smoothAlpha *= smoothShowingZoom;
-                size = fLabel[Mathf.RoundToInt(smoothInderxer)].textRect.size * 0.6f * zoom + Vector2.one * 10f * zoom * 0.6f;
+                size = fLabel[Mathf.RoundToInt(smoothInderxer)].textRect.size * 0.6f * Zoom + Vector2.one * 10f * Zoom * 0.6f;
 
                 smoothPlayerRelativeVector = Vector2.Lerp(lastPlayerRelativeVector, playerRelativeVector, 0.1f);
                 lastPlayerRelativeVector = smoothPlayerRelativeVector;
@@ -189,7 +208,7 @@ namespace LittleBiologist
                 background.scaleX = (smoothSize.x + icon.localRect.size.x + 2f) * smoothShowingZoom;
                 background.scaleY = (smoothSize.y + icon.localRect.size.y + 2f) * smoothShowingZoom;
 
-                Color aimColor = Color.Lerp(Color.gray,lBio_LabelPages[indexer].GetColor(),0.4f);
+                Color aimColor = Color.Lerp(Color.gray,lBio_LabelPages[Indexer].GetColor(),0.4f);
                 aimColor.a = aimColor.a * smoothAlpha * smoothShowingZoom;
 
                 if (rCam != null)
@@ -213,19 +232,19 @@ namespace LittleBiologist
                 iconShadow.scale = icon.scale * 3f;
 
                 //背景更新
-                if (!slatedForDeletion)
+                if (!SlatedForDeletion)
                 {
                     localTextChangeProcess += 1 / 30f;
                     localTextChangeProcess = Mathf.Clamp(localTextChangeProcess, 0, 0.5f);
 
-                    if (!isHanging)
+                    if (!IsHanging)
                     {
                         playerRelativeVector = Vector2.zero;
                         if (rCam.room.game.Players.Count > 0)
                         {
                             foreach (var player in rCam.room.game.Players)
                             {
-                                if (player.realizedCreature != null && player.Room == rCam.room.abstractRoom && player.realizedCreature != creature)
+                                if (player.realizedCreature != null && player.Room == rCam.room.abstractRoom && player.realizedCreature != Creature)
                                 {
                                     playerRelativeVector += (smoothCreaturePos - player.realizedCreature.mainBodyChunk.pos).normalized;
                                 }
@@ -251,28 +270,28 @@ namespace LittleBiologist
                     iconShadow.SetPosition(icon.GetPosition());
 
                     //Caculate lineConnection
-                    Vector2 temp = (creature.mainBodyChunk.pos - rCam.pos - new Vector2(background.x, background.y)).normalized;
+                    Vector2 temp = (Creature.mainBodyChunk.pos - rCam.pos - new Vector2(background.x, background.y)).normalized;
                     Vector2 perpendicularTemp = Custom.PerpendicularVector(temp) * 2f * smoothShowingZoom;
 
 
-                    connectLine.MoveVertice(0, Vector2.Lerp(creature.mainBodyChunk.lastPos, creature.mainBodyChunk.pos, 0.5f) - rCam.pos - perpendicularTemp);
-                    connectLine.MoveVertice(1, Vector2.Lerp(creature.mainBodyChunk.lastPos, creature.mainBodyChunk.pos, 0.5f) - rCam.pos + perpendicularTemp);
+                    connectLine.MoveVertice(0, Vector2.Lerp(Creature.mainBodyChunk.lastPos, Creature.mainBodyChunk.pos, 0.5f) - rCam.pos - perpendicularTemp);
+                    connectLine.MoveVertice(1, Vector2.Lerp(Creature.mainBodyChunk.lastPos, Creature.mainBodyChunk.pos, 0.5f) - rCam.pos + perpendicularTemp);
                     connectLine.MoveVertice(2, background.GetPosition() - perpendicularTemp);
                     connectLine.MoveVertice(3, background.GetPosition() + perpendicularTemp);
 
                     if (LBio_InfoMemories.ContainsKey(basicName))
                     {
-                        LBio_InfoMemories[basicName].indexer = indexer;
-                        LBio_InfoMemories[basicName].isHanging = isHanging;
+                        LBio_InfoMemories[basicName].indexer = Indexer;
+                        LBio_InfoMemories[basicName].isHanging = IsHanging;
                         LBio_InfoMemories[basicName].isShowing = isShowing;
                         LBio_InfoMemories[basicName].screenPos = ScreenPos + smoothPlayerRelativeVector;
-                        LBio_InfoMemories[basicName].localPageIndex = lBio_LabelPages[indexer].localPageIndex;
+                        LBio_InfoMemories[basicName].localPageIndex = lBio_LabelPages[Indexer].localPageIndex;
                     }
                 }
 
                 background.alpha = smoothAlpha;
                 icon.alpha = smoothAlpha;
-                iconFlash.alpha = 0.8f * smoothAlpha * ((creature != null && creature.dead) ? 0f : 1f);
+                iconFlash.alpha = 0.8f * smoothAlpha * ((Creature != null && Creature.dead) ? 0f : 1f);
                 iconShadow.alpha = smoothAlpha * 0.8f;
 
                 background.color = smoothBackgroundColor;
@@ -295,14 +314,13 @@ namespace LittleBiologist
                 }
 
 
-
                 for (int i = 0; i < fLabel.Length; i++)
                 {
                     if (Mathf.Abs(i - smoothInderxer) < 1f)
                     {
-                        if (!slatedForDeletion && i == indexer && localTextChangeProcess > 0.25f)
+                        if (!SlatedForDeletion && i == Indexer && localTextChangeProcess > 0.25f)
                         {
-                            fLabel[i].text = lBio_LabelPages[indexer].GetText();
+                            fLabel[i].text = lBio_LabelPages[Indexer].GetText();
                         }
 
                         float scaleCoeffcient = Mathf.Sin(Mathf.Lerp(0f, Mathf.PI, smoothInderxer - i + 0.5f));
@@ -310,9 +328,9 @@ namespace LittleBiologist
 
                         fLabel[i].scaleX = scaleCoeffcient * smoothShowingZoom * 0.6f;
                         fLabel[i].scaleY = smoothShowingZoom * 0.6f;
-                        fLabel[i].alpha = smoothAlpha * localTextChangeAlpha * smoothShowingZoom * scaleCoeffcient;
+                        fLabel[i].alpha = smoothAlpha * LocalTextChangeAlpha * smoothShowingZoom * scaleCoeffcient;
 
-                        if (!slatedForDeletion)
+                        if (!SlatedForDeletion)
                         {
                             fLabel[i].SetPosition(ScreenPos + Vector2.right * (size.x / 2) * posCoefficient * smoothShowingZoom + smoothPlayerRelativeVector);
                         }
@@ -332,7 +350,7 @@ namespace LittleBiologist
         /// <param name="index">需要切换的序号，-1表示显示开关</param>
         public void SwitchPages(int index)
         {
-            if (isHanging && (currentMouseOverLabel != this))
+            if (IsHanging && (currentMouseOverLabel != this))
             {
                 return;
             }
@@ -346,11 +364,11 @@ namespace LittleBiologist
             }
             else
             {
-                if(index == indexer)
+                if(index == Indexer)
                 {
-                    lBio_LabelPages[indexer].SwitchLocalPage();
+                    lBio_LabelPages[Indexer].SwitchLocalPage();
                 }
-                indexer = index;
+                Indexer = index;
             }
             Flash();
           }
@@ -400,8 +418,7 @@ namespace LittleBiologist
             }
         }
 
-        List<LBio_LabelPage> lBio_LabelPages = new List<LBio_LabelPage>();
-
+        readonly List<LBio_LabelPage> lBio_LabelPages = new List<LBio_LabelPage>();
 
         //生物的平滑位置坐标
         public Vector2 creaturePos = new Vector2(0, 0);
@@ -411,12 +428,12 @@ namespace LittleBiologist
         Vector2 _ScreenPos = new Vector2(0, 0);
         Vector2 ScreenPos
         {
-            get => isHanging ? _ScreenPos : smoothCreaturePos - rCam.pos;
+            get => IsHanging ? _ScreenPos : smoothCreaturePos - rCam.pos;
             set
             {
                 _ScreenPos = value;
 
-                if (isHanging)
+                if (IsHanging)
                 {
                     creaturePos = _ScreenPos + rCam.pos;
                 }
@@ -432,8 +449,8 @@ namespace LittleBiologist
         Color smoothBackgroundColor = Color.black;
 
         //标签序号
-        int _indexer = totalIndexer;
-        public int indexer
+        int _indexer = TotalIndexer;
+        public int Indexer
         {
             get => _indexer;
             set
@@ -441,10 +458,10 @@ namespace LittleBiologist
                 _indexer = (int)Mathf.Clamp(value, 0, lBio_LabelPages.Count - 1 > 0 ? lBio_LabelPages.Count - 1 : 0);
             }
         }
-        float lastInderxer = totalIndexer;
-        float smoothInderxer = totalIndexer;
+        float lastInderxer = TotalIndexer;
+        float smoothInderxer = TotalIndexer;
 
-        public float showingZoom => isShowing && !slatedForDeletion ? 1f : 0f;
+        public float ShowingZoom => isShowing && !SlatedForDeletion ? 1f : 0f;
         float lastShowingZoom = 0f;
         float smoothShowingZoom = 0f;
 
@@ -465,7 +482,7 @@ namespace LittleBiologist
         /// <summary>
         /// 设置标签状态为删除
         /// </summary>
-        public bool slatedForDeletion
+        public bool SlatedForDeletion
         {
             get => _slatedForDeletion;
             set
@@ -482,7 +499,7 @@ namespace LittleBiologist
         int flashing = 0;
 
         //当这个值为True时才会真正的移除标签
-        bool DeletionProcessComplete => smoothAlpha < 0.01f && slatedForDeletion;
+        bool DeletionProcessComplete => smoothAlpha < 0.01f && SlatedForDeletion;
 
         public bool Reveal
         {
@@ -501,15 +518,15 @@ namespace LittleBiologist
 
         //标签页局部文本切换过程
         internal float localTextChangeProcess = 0.5f;
-        float localTextChangeAlpha => 1 - Mathf.Sin((float)Math.PI * 2f * localTextChangeProcess);
+        float LocalTextChangeAlpha => 1 - Mathf.Sin((float)Math.PI * 2f * localTextChangeProcess);
         //基础变量
         public RoomCamera rCam
         {
             get
             {
-                if (creature.InSameRoomWithCamera())
+                if (Creature.InSameRoomWithCamera())
                 {
-                    return creature.room.game.cameras[0];
+                    return Creature.room.game.cameras[0];
                 }
                 else
                 {
@@ -517,10 +534,11 @@ namespace LittleBiologist
                 }
             }
         }
+
         /// <summary>
         /// 所有的标签页
         /// </summary>
-        FLabel[] fLabel = new FLabel[6];
+        readonly FLabel[] fLabel = new FLabel[6];
         /// <summary>
         /// 背景
         /// </summary>
@@ -543,16 +561,16 @@ namespace LittleBiologist
         /// <summary>
         /// 表示鼠标悬停或者选中时的缩放
         /// </summary>
-        float zoom
+        float Zoom
         {
             get
             {
-                return (isHanging? 1.1f : 1f) * (currentMouseOverLabel == this ? 1.1f : 1f);
+                return (IsHanging? 1.1f : 1f) * (currentMouseOverLabel == this ? 1.1f : 1f);
             }
         }
 
         bool _isHanging;//是否悬挂
-        public bool isHanging
+        public bool IsHanging
         {
             get => _isHanging;
             set
@@ -564,7 +582,7 @@ namespace LittleBiologist
                 _isHanging = value;
             }
         }
-        public bool isShowing = totalShowing; //是否显示
+        public bool isShowing = TotalShowing; //是否显示
         #endregion
 
 
@@ -576,7 +594,7 @@ namespace LittleBiologist
         static float clickTime = 0f;
 
         static bool _totalShow = true;
-        public static bool totalShowing
+        public static bool TotalShowing
         {
             get => _totalShow;
             set
@@ -593,7 +611,8 @@ namespace LittleBiologist
         }
 
         static int _totalIndexer = 0;
-        public static int totalIndexer
+        public static bool ChangeRoom = false;
+        public static int TotalIndexer
         {
             get => _totalIndexer;
             set
@@ -636,6 +655,7 @@ namespace LittleBiologist
                     getOneMouseOverLabel = true;
                     break;
                 }
+
             }
             
             //free haning for all
@@ -643,7 +663,7 @@ namespace LittleBiologist
             {
                 foreach (var label in lBio_CreatureLabels)
                 {
-                    label.isHanging = false;
+                    label.IsHanging = false;
                 }
             }
 
@@ -656,7 +676,7 @@ namespace LittleBiologist
                 {
                     foreach (var label in lBio_CreatureLabels)
                     {
-                        label.isHanging = false;
+                        label.IsHanging = false;
                     }
                 }
             }
@@ -675,11 +695,11 @@ namespace LittleBiologist
 
                     if (Time.time - clickTime > 0.15f)
                     {
-                        if (currentMouseOverLabel.isHanging)
+                        if (currentMouseOverLabel.IsHanging)
                         {
                             currentMouseOverLabel.ScreenPos += deltaMousePos;
                         }
-                        currentMouseOverLabel.isHanging = true;
+                        currentMouseOverLabel.IsHanging = true;
                     }
                 }
 
@@ -688,11 +708,29 @@ namespace LittleBiologist
                     float span = Time.time - clickTime;
                     if(span < 0.15f)
                     {
-                        currentMouseOverLabel.isHanging = !currentMouseOverLabel.isHanging;
+                        currentMouseOverLabel.IsHanging = !currentMouseOverLabel.IsHanging;
                     }
                 }
             }
 
+            if (Input.GetMouseButtonDown(2))
+            {
+                if (getOneMouseOverLabel)
+                {
+                    currentMouseOverLabel.rCam.followAbstractCreature = currentMouseOverLabel.Creature.abstractCreature;
+                    Log("Follow", currentMouseOverLabel.basicName);
+                }
+                else
+                {
+                    Log("FollowPlayer");
+                    if(LBio_NaviHodler.allHolders[0].AbCreature.Room.world.game.Players[0].Room.realizedRoom == null)
+                    {
+                        LBio_NaviHodler.allHolders[0].AbCreature.Room.world.game.Players[0].Room.RealizeRoom(LBio_NaviHodler.allHolders[0].AbCreature.Room.world, LBio_NaviHodler.allHolders[0].AbCreature.Room.world.game);
+                    }
+
+                    ChangeRoom = true;
+                }
+            }
 
             bool switching = false;
             int newIndex = 0;
@@ -745,11 +783,11 @@ namespace LittleBiologist
                 {
                     if (newIndex == -1)
                     {
-                        totalShowing = !totalShowing;
+                        TotalShowing = !TotalShowing;
                     }
                     else
                     {
-                        totalIndexer = newIndex;
+                        TotalIndexer = newIndex;
                     }
                 }
             }

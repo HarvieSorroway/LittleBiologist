@@ -42,7 +42,7 @@ namespace LittleBiologist
         {
             orig.Invoke(self, world, creatureTemplate, realizedCreature, pos, ID);
 
-            StartCoroutine(late_CheckAbstractCreatureForHolder(self));
+            StartCoroutine(Late_CheckAbstractCreatureForHolder(self));
         }
 
         private void AbstractCreature_InDenUpdate(On.AbstractCreature.orig_InDenUpdate orig, AbstractCreature self, int time)
@@ -99,7 +99,7 @@ namespace LittleBiologist
         {
             try
             {
-                if(newRoom.abstractRoom.world.region.name != self.room.abstractRoom.world.region.name)
+                if (newRoom.abstractRoom.world.region.name != self.room.abstractRoom.world.region.name)
                 {
                     LBio_CreatureLabel.DestroyAll();
                 }
@@ -116,7 +116,7 @@ namespace LittleBiologist
         }
         #endregion
 
-        IEnumerator late_CheckAbstractCreatureForHolder(AbstractCreature abstractCreature)
+        IEnumerator Late_CheckAbstractCreatureForHolder(AbstractCreature abstractCreature)
         {
             yield return null;
             abstractCreature.GetModule();
