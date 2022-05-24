@@ -8,7 +8,7 @@ using UnityEngine;
 using System.Collections;
 using static LittleBiologist.LBio_Const;
 using LittleBiologist.LBio_Navigations;
-
+using LittleBiologist.LBio_Tools;
 
 namespace LittleBiologist
 {
@@ -36,6 +36,7 @@ namespace LittleBiologist
             On.AbstractCreature.ctor += AbstractCreature_ctor;
 
             LBio_LabelConfig.SetupConfig();
+            LBio_Safari.Patch();
         }
 
         private void AbstractCreature_ctor(On.AbstractCreature.orig_ctor orig, AbstractCreature self, World world, CreatureTemplate creatureTemplate, Creature realizedCreature, WorldCoordinate pos, EntityID ID)
@@ -50,10 +51,6 @@ namespace LittleBiologist
             orig.Invoke(self, time);
 
             LBio_Navigations.LBio_NaviHodler lBio_NaviHodler = self.GetModule();
-            if (lBio_NaviHodler != null)
-            {
-                lBio_NaviHodler.Update();
-            }
         }
 
         private void AbstractCreature_Update(On.AbstractCreature.orig_Update orig, AbstractCreature self, int time)
@@ -61,20 +58,18 @@ namespace LittleBiologist
             orig.Invoke(self, time);
 
             LBio_Navigations.LBio_NaviHodler lBio_NaviHodler = self.GetModule();
-            if(lBio_NaviHodler != null)
-            {
-                lBio_NaviHodler.Update();
-            }
         }
 
         public void Update()
         {
             LBio_CreatureLabel.GetHanging_or_MouseOver_Label();
+            LBio_Navigations.LBio_NaviHUD.UpdateMouseOperation();
         }
         private void Creature_Update(On.Creature.orig_Update orig, Creature self, bool eu)
         {
             orig.Invoke(self,eu);
 
+            self.abstractCreature.GetModule();
             LBio_CreatureLabel lBio_CreatureModule = self.GetModule();
             if(lBio_CreatureModule != null)
             {

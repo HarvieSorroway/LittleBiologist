@@ -9,7 +9,7 @@ using UnityEngine;
 using static LittleBiologist.LBio_Const;
 using Random = UnityEngine.Random;
 using LittleBiologist.LBio_Navigations;
-
+using LittleBiologist.LBio_Tools;
 
 namespace LittleBiologist
 {
@@ -32,16 +32,6 @@ namespace LittleBiologist
                 LBio_CreatureLabels[i].Draw();
             }
             LBio_NaviHUD.Draw();
-
-            if (LBio_CreatureLabel.ChangeRoom)
-            {
-                
-                Room newRoom = LBio_NaviHodler.allHolders[0].AbCreature.Room.world.game.Players[0].Room.realizedRoom;
-                LBio_NaviHodler.allHolders[0].AbCreature.Room.world.game.cameras[0].MoveCamera(newRoom, 0);
-                LBio_NaviHodler.allHolders[0].AbCreature.Room.world.game.cameras[0].followAbstractCreature = LBio_NaviHodler.allHolders[0].AbCreature.Room.world.game.Players[0];
-
-                LBio_CreatureLabel.ChangeRoom = false;
-            }
         }
 
         public override void ClearSprites()
@@ -637,7 +627,7 @@ namespace LittleBiologist
         /// </summary>
         public static void GetHanging_or_MouseOver_Label()
         {
-            if(lBio_CreatureLabels.Count == 0)
+            if(lBio_CreatureLabels.Count == 0 || LBio_NaviHUD.mouseOverAnyElement)
             {
                 return;
             }
@@ -648,7 +638,6 @@ namespace LittleBiologist
             foreach (var label in lBio_CreatureLabels)
             {
                 Vector2 localMousePos = label.background.GetLocalMousePosition();
-                //Log(label.basicName, localMousePos.x, localMousePos.y);
                 if (localMousePos.x < 0.5f && localMousePos.x > -0.5f && localMousePos.y > -0.5f && localMousePos.y < 0.5f)
                 {
                     currentMouseOverLabel = label;
@@ -688,7 +677,7 @@ namespace LittleBiologist
                     clickTime = Time.time;
                 }
 
-                if (Input.GetMouseButton(0))
+                if (Input.GetMouseButton(0) && getOneMouseOverLabel)
                 {
                     Vector2 deltaMousePos = mousePos - mousePosLastFrame;
                     mousePosLastFrame = mousePos;
@@ -717,18 +706,13 @@ namespace LittleBiologist
             {
                 if (getOneMouseOverLabel)
                 {
-                    currentMouseOverLabel.rCam.followAbstractCreature = currentMouseOverLabel.Creature.abstractCreature;
+                    LBio_Safari.ChangeCameraFollow(currentMouseOverLabel.Creature.abstractCreature);
                     Log("Follow", currentMouseOverLabel.basicName);
                 }
                 else
                 {
                     Log("FollowPlayer");
-                    if(LBio_NaviHodler.allHolders[0].AbCreature.Room.world.game.Players[0].Room.realizedRoom == null)
-                    {
-                        LBio_NaviHodler.allHolders[0].AbCreature.Room.world.game.Players[0].Room.RealizeRoom(LBio_NaviHodler.allHolders[0].AbCreature.Room.world, LBio_NaviHodler.allHolders[0].AbCreature.Room.world.game);
-                    }
-
-                    ChangeRoom = true;
+                    LBio_Safari.ChangeCameraFollow(LBio_NaviHodler.allHolders[0].AbCreature.Room.world.game.Players[0]);
                 }
             }
 

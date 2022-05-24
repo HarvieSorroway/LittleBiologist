@@ -64,9 +64,10 @@
     <Compile Include="LBio_Labels\LBio_LabelPages.cs" />
     <Compile Include="LBio_Navigations\LBio_NavigationCore.cs" />
     <Compile Include="LBio_Navigations\LBio_NaviHUD.cs" />
+    <Compile Include="LBio_Tools\LBio_Safari.cs" />
     <Compile Include="LittleBiologist_ModulePatch.cs" />
     <Compile Include="LittleBiologist_HUD.cs" />
-    <Compile Include="LBio_Const.cs" />
+    <Compile Include="LBio_Tools\LBio_Const.cs" />
     <Compile Include="LBio_Labels\LittleBiologist_Label.cs" />
     <Compile Include="LittleBiologist.cs" />
   </ItemGroup>
