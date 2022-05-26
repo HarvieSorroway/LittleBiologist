@@ -208,7 +208,7 @@ namespace LittleBiologist.LBio_Navigations
                 currentMouseOverHolder = null;
             }
 
-            if (Input.GetMouseButton(0))
+            if (Input.GetMouseButton(0) && LBio_NaviHodler.currentMouseOverHolder == null)
             {
                 for (int i = LBio_NaviHUD.instance.allTypeHolders.Count - 1; i >= 0; i--)
                 {
@@ -272,6 +272,7 @@ namespace LittleBiologist.LBio_Navigations
     public class LBio_NaviHodler
     {
         public static LBio_NaviHodler currentMouseOverHolder = null;
+        public static LBio_NaviHodler selecetdHolder = null;
         public static List<LBio_NaviHodler> allHolders = new List<LBio_NaviHodler>();
         public LBio_NaviHodler(AbstractCreature abstractCreature)
         {
@@ -330,6 +331,14 @@ namespace LittleBiologist.LBio_Navigations
             allHolders.Remove(this);
             RemoveSprites();
             LBio_NaviHUD.instance.RemoveNaviHolder(this);
+            if(selecetdHolder == this)
+            {
+                selecetdHolder = null;
+            }
+            if(currentMouseOverHolder == this)
+            {
+                currentMouseOverHolder = null;
+            }
             Log("Destroy Holder for " + basciName);
         }
 
@@ -353,7 +362,6 @@ namespace LittleBiologist.LBio_Navigations
                         {
                             LBio_Safari.ChangeCameraFollow(allHolders[i].AbCreature);
                             
-
                             foreach (var holder in LBio_NaviHUD.instance.allTypeHolders)
                             {
                                 holder.Selected = false;
@@ -363,19 +371,48 @@ namespace LittleBiologist.LBio_Navigations
                     break;
                 }
             }
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                if (selecetdHolder != null)
+                {
+                    if(currentMouseOverHolder != selecetdHolder)
+                    {
+                        if(currentMouseOverHolder != null)
+                        {
+                            selecetdHolder = currentMouseOverHolder;
+                        }
+                    }
+                    else
+                    {
+                        selecetdHolder = null;
+                    }
+                }
+                else
+                {
+                    if(currentMouseOverHolder != null)
+                    {
+                        selecetdHolder = currentMouseOverHolder;
+                    }
+                    else
+                    {
+                        selecetdHolder = null;
+                    }
+                }
+            }
         }
 
-        float alpha => (owner.Selected ? 1f : 0f) * (LBio_NaviTypeHolder.hideCounter == 0 ? 0.1f : 1f);
+        float alpha => (selecetdHolder == this ? 1f : (owner.Selected ? 1f : 0f)) * (LBio_NaviTypeHolder.hideCounter == 0 ? 0.1f : 1f);
         float smoothAlpha = 0f;
         float lastAlpha = 0f;
 
-        float scale => (currentMouseOverHolder == this ? 1.2f : 1f) * smoothAlpha;
+        float scale => (currentMouseOverHolder == this ? 1.2f : 1f) * (selecetdHolder == this ? 1f : smoothAlpha);
         float smoothScale = 1f;
         float lastScale = 1f;
 
-        public bool ShouldUpdate => owner != null && (smoothAlpha > 0.01f || owner.Selected);
+        public bool ShouldUpdate => owner != null && (smoothAlpha > 0.01f || owner.Selected || selecetdHolder == this);
 
-        Vector2 pos => owner.Selected ? new Vector2(80f, 768 - 40f - LBio_NaviHUD.allHolders[Type].IndexOf(this) * 15f) : owner.icon.GetPosition();
+        Vector2 pos => selecetdHolder == this ? new Vector2(20f,768f - 15f): (owner.Selected ? new Vector2(80f, 768 - 40f - LBio_NaviHUD.allHolders[Type].IndexOf(this) * 18f) : owner.icon.GetPosition());
         Vector2 smoothPos;
         Vector2 lastPos;
 

@@ -64,6 +64,9 @@
     <Compile Include="LBio_Labels\LBio_LabelPages.cs" />
     <Compile Include="LBio_Navigations\LBio_NavigationCore.cs" />
     <Compile Include="LBio_Navigations\LBio_NaviHUD.cs" />
+    <Compile Include="LBio_Overseer_Of_FC\LBio_CustomHologram.cs" />
+    <Compile Include="LBio_Overseer_Of_FC\LBio_NaviOverseer.cs" />
+    <Compile Include="LBio_Overseer_Of_FC\LBio_OverseerPatch.cs" />
     <Compile Include="LBio_Tools\LBio_Safari.cs" />
     <Compile Include="LittleBiologist_ModulePatch.cs" />
     <Compile Include="LittleBiologist_HUD.cs" />
