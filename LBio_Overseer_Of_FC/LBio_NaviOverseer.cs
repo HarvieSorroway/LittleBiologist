@@ -6,6 +6,9 @@ using System.Text;
 using LittleBiologist.LBio_Navigations;
 using System.Collections;
 using UnityEngine;
+using static LittleBiologist.LBio_Const;
+
+
 
 namespace LittleBiologist
 {
@@ -17,6 +20,36 @@ namespace LittleBiologist
             On.RainWorldGame.ShutDownProcess += RainWorldGame_ShutDownProcess;
             On.Overseer.TryAddHologram += Overseer_TryAddHologram;
             On.OverseerAbstractAI.HowInterestingIsCreature += OverseerAbstractAI_HowInterestingIsCreature;
+            On.Overseer.Update += Overseer_Update;
+            //On.OverseerAI.HoverScoreOfTile += OverseerAI_HoverScoreOfTile;
+        }
+
+        private static void Overseer_Update(On.Overseer.orig_Update orig, Overseer self, bool eu)
+        {
+            orig.Invoke(self,eu);
+            if(guideOverseer != null && self.abstractCreature != null &&  self.abstractCreature == guideOverseer)
+            {
+                if(LBio_NaviHodler.selecetdHolder != null && LBio_NaviHodler.selecetdHolder.AbCreature != null)
+                {
+                    if(self.room != null && self.room.world != null && self.room.world.game != null && self.room.world.game.Players != null && self.room.world.game.Players.Count > 0 && self.room.world.game.Players[0] != null && self.room.world.game.Players[0].realizedCreature != null)
+                    {
+                        self.TryAddHologram(EnumExt_LBioOverseer.LBio_NaviHologram, self.room.world.game.Players[0].realizedCreature, float.MaxValue);
+                    }
+                }
+            }
+        }
+
+        private static float OverseerAI_HoverScoreOfTile(On.OverseerAI.orig_HoverScoreOfTile orig, OverseerAI self, RWCustom.IntVector2 testTile)
+        {
+            if(self.overseer.abstractCreature == guideOverseer && self.overseer.hologram != null && self.overseer.hologram is LBio_NaviHologram)
+            {
+                LBio_NaviHologram hologram = self.overseer.hologram as LBio_NaviHologram;
+                return -(100000f - Vector2.Distance(testTile.ToVector2(), hologram.displayTile.ToVector2()) * 1000f);
+            }
+            else
+            {
+                return orig.Invoke(self, testTile);
+            }
         }
 
         private static float OverseerAbstractAI_HowInterestingIsCreature(On.OverseerAbstractAI.orig_HowInterestingIsCreature orig, OverseerAbstractAI self, AbstractCreature testCrit)
@@ -41,6 +74,10 @@ namespace LittleBiologist
             {
                 Update(self.Players[0].realizedCreature as Player);
             }
+            for(int i = LBio_NaviHodler.allHolders.Count - 1;i >= 0; i--)
+            {
+                AbstractCreature temp = LBio_NaviHodler.allHolders[i].AbCreature;
+            }
         }
 
         public static void Update(Player player)
@@ -51,15 +88,6 @@ namespace LittleBiologist
             {
                 //bring NaviGuide to player
                 BringOverseerToPlayer(player);
-
-                if(guideOverseer.realizedCreature != null)
-                {
-                    Overseer guide = guideOverseer.realizedCreature as Overseer;
-                    if(!(guide.hologram is LBio_NaviHologram))
-                    {
-                        guide.TryAddHologram(EnumExt_LBioOverseer.LBio_NaviHologram, player, float.MaxValue);
-                    }
-                }
             }
             else
             {
@@ -91,10 +119,6 @@ namespace LittleBiologist
                 ((OverseerAbstractAI)guideOverseer.abstractAI).ownerIterator = 806;
             }
 
-            if(guideOverseer.abstractAI.denPosition != player.coord.WashNode())
-            {
-                guideOverseer.abstractAI.SetDestination(player.coord.WashNode());
-            }
             if(!((guideOverseer.abstractAI) as OverseerAbstractAI).goToPlayer)
             {
                 ((guideOverseer.abstractAI) as OverseerAbstractAI).goToPlayer = true;
@@ -123,45 +147,55 @@ namespace LittleBiologist
         }
         private static void Overseer_TryAddHologram(On.Overseer.orig_TryAddHologram orig, Overseer self, OverseerHologram.Message message, Creature communicateWith, float importance)
         {
-            if (message != EnumExt_LBioOverseer.LBio_NaviHologram)
+            if(self == null)
             {
-                orig.Invoke(self, message, communicateWith, importance);
                 return;
             }
+            if(self.hologram != null && self.hologram is LBio_NaviHologram)
+            {
+                return;
+            }
+            if (message != EnumExt_LBioOverseer.LBio_NaviHologram)
+            {
+                if((self.abstractCreature.abstractAI as OverseerAbstractAI).ownerIterator != 806)
+                {
+                    orig.Invoke(self, message, communicateWith, importance);
+                }
+                return;
+            }
+            Log("Add holo - block1");
             if (self.dead)
             {
                 return;
             }
+            Log("Add holo - block2");
             if (self.hologram != null)
             {
                 if (self.hologram.message == message)
                 {
+                    Log("Add holo - block3");
                     return;
                 }
                 if (self.hologram.importance >= importance && importance != float.MaxValue)
                 {
+                    Log("Add holo - block4");
                     return;
                 }
+                Log("Add holo - block5");
                 self.hologram.stillRelevant = false;
                 self.hologram = null;
             }
 
-            if(LBio_NaviHodler.selecetdHolder != null && LBio_NaviHodler.selecetdHolder.AbCreature != null)
+            if(LBio_NaviHodler.selecetdHolder != null && LBio_NaviHodler.selecetdHolder.AbCreature != null && LBio_NaviHodler.selecetdHolder.AbCreature.Room != null)
             {
-                try
+                Log("Add holo - block6");
+                self.hologram = new LBio_NaviHologram(self, communicateWith, importance);
+                Log("Add holo - block7");
+                if (self.hologram != null)
                 {
-                    self.hologram = new LBio_NaviHologram(self, communicateWith, importance);
                     self.room.AddObject(self.hologram);
+                    Log("Add holo - block8");
                 }
-                catch(Exception e)
-                {
-                    Debug.LogError(e);
-                    Debug.LogError("player : " + (communicateWith != null));
-                }
-            }
-            else
-            {
-                orig.Invoke(self, OverseerHologram.Message.None, communicateWith, importance);
             }
         }
 

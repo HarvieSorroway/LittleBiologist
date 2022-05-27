@@ -144,7 +144,7 @@ namespace LittleBiologist.LBio_Navigations
             smoothPos = Vector2.Lerp(lastPos, Pos, 0.1f);
             lastPos = smoothPos;
 
-            smoothAlpha = Mathf.Lerp(lastAlpha, alpha * life * (hideCounter == 0 ? 0.1f : 1f), 0.05f);
+            smoothAlpha = Mathf.Lerp(lastAlpha, alpha * life * (hideCounter == 0 ? 0.1f : 0.7f), 0.05f);
             lastAlpha = smoothAlpha;
 
             if (!slatedForDeletion)
@@ -237,7 +237,7 @@ namespace LittleBiologist.LBio_Navigations
         Vector2 smoothPos;
 
         public float alpha = 1f;
-        float lastAlpha = 0f;
+        public float lastAlpha = 0f;
         float smoothAlpha = 0f;
 
         public FSprite icon;
@@ -284,6 +284,7 @@ namespace LittleBiologist.LBio_Navigations
             allHolders.Add(this);
             LBio_NaviHUD.instance.AddNaviHolder(this);
             owner = LBio_NaviHUD.instance.allTypeHolders.Find(x => x.Type == Type);
+            owner.lastAlpha = 1f;
             Log("Add Holder for " + basciName);
             InitSprtes();
         }

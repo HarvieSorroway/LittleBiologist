@@ -33,7 +33,7 @@ namespace LittleBiologist.LBio_Tools
 
         private static void Creature_Violence(On.Creature.orig_Violence orig, Creature self, BodyChunk source, UnityEngine.Vector2? directionAndMomentum, BodyChunk hitChunk, PhysicalObject.Appendage.Pos hitAppendage, Creature.DamageType type, float damage, float stunBonus)
         {
-            if(hitChunk.owner is Player)
+            if(hitChunk != null && hitChunk.owner is Player)
             {
                 if(!followPlayer)
                 {

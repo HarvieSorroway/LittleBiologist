@@ -17,35 +17,57 @@ namespace LittleBiologist
         {
             get
             {
-                if(LBio_NaviHodler.selecetdHolder != null && LBio_NaviHodler.selecetdHolder.AbCreature != null)
+                if(LBio_NaviHodler.selecetdHolder != null && LBio_NaviHodler.selecetdHolder.AbCreature != null && LBio_NaviHodler.selecetdHolder.AbCreature.Room != null)
                 {
+                    if(ID != null && LBio_NaviHodler.selecetdHolder.AbCreature.ID.number != ID.Value.number)
+                    {
+                        stillRelevant = false;
+                        return null;
+                    }
                     return LBio_NaviHodler.selecetdHolder.AbCreature;
                 }
+                stillRelevant = false;
+                Destroy();
                 return null;
             }
         }
-        public LBio_NaviHologram(Overseer overseer, Creature communicateWith, float importance) : base(overseer, Message.None, communicateWith, importance)
+        public LBio_NaviHologram(Overseer overseer, Creature communicateWith, float importance) : base(overseer, EnumExt_LBioOverseer.LBio_NaviHologram, communicateWith, importance)
         {
+            Log("Init NaviHologram");
+            if(NaviCreature != null)
+            {
+                ID = NaviCreature.ID;
+            }
+            else
+            {
+                Log("Init failed");
+                Destroy();
+                ID = null;
+            }
+
             totalSprites = 0;
-            overseer.AI.scaredDistance = 0f;
+            message = EnumExt_LBioOverseer.LBio_NaviHologram;
 
             effect = new HologramLightEffect(this, totalSprites, 1f, 1f, 100f, 20f);
             AddPart(effect);
             arrow = new LBio_NaviArrow(this, totalSprites);
             AddPart(arrow);
 
-            if(NaviCreature != null)
+            symbol = new LBio_Symbol(this, totalSprites, NaviCreature.creatureTemplate.type);
+            customDirectionFinder = new CustomDirectionFinder(overseer.abstractCreature.world, NaviCreature.Room, this);
+
+            
+            //redCross.partFade = 0f;
+
+            if (symbol != null)
             {
-                try
-                {
-                    customDirectionFinder = new CustomDirectionFinder(overseer.room.world, NaviCreature.Room,this);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogException(new NullReferenceException((overseer.room.world != null).ToString() + " : " + (NaviCreature.Room != null).ToString()));
-                }
-                symbol = new LBio_Symbol(this, totalSprites, NaviCreature.creatureTemplate.type);
                 AddPart(symbol);
+                redCross = new LBio_RedCross(this, totalSprites, true);
+                AddPart(redCross);
+            }
+            else
+            {
+                Destroy();
             }
         }
 
@@ -57,7 +79,7 @@ namespace LittleBiologist
                 return num;
             }
 
-            if (room.abstractRoom.index != NaviCreature.Room.index)
+            if (room.abstractRoom.index != NaviCreature.Room.index && !NaviCreature.Room.offScreenDen)
             {
                 ShortcutData? shortcutData = null;
                 for (int i = 0; i < room.shortcuts.Length; i++)
@@ -70,14 +92,13 @@ namespace LittleBiologist
                 }
                 this.shortcutData = shortcutData;
 
-                if (shortcutData != null && Custom.DistLess(this.room.MiddleOfTile(shortcutData.Value.StartTile), communicateWith.DangerPos, 200f))
+                if (shortcutData != null && Custom.DistLess(this.room.MiddleOfTile(shortcutData.Value.StartTile), communicateWith.DangerPos, 300f))
                 {
-                    num -= 10000 - 20 * Vector2.Distance(this.room.MiddleOfTile(shortcutData.Value.StartTile) + Vector2.up * 40f, this.room.MiddleOfTile(testPos));
+                    num -= 10000 - 20 * Vector2.Distance(this.room.MiddleOfTile(shortcutData.Value.StartTile) + Vector2.up * 60f, this.room.MiddleOfTile(testPos));
                 }
                 else
                 {
                     num -= 10000 - 20 * Vector2.Distance(communicateWith.DangerPos + Vector2.up * 60f, this.room.MiddleOfTile(testPos));
-
                 }
             }
             else
@@ -95,9 +116,15 @@ namespace LittleBiologist
             return num;
         }
 
+        public override float InfluenceHoverScoreOfTile(IntVector2 testTile, float f)
+        {
+            return f -(10000 - Vector2.Distance(overseer.DangerPos,communicateWith.DangerPos) * 20f);
+        }
+
         public override void Destroy()
         {
             base.Destroy();
+            stillRelevant = false;
             overseer.hologram = null;
         }
 
@@ -107,54 +134,123 @@ namespace LittleBiologist
             {
                 return;
             }
+            if(LBio_NaviHodler.selecetdHolder == null)
+            {
+                Destroy();
+                return;
+            }
+            if(LBio_NaviHodler.selecetdHolder != null && LBio_NaviHodler.selecetdHolder.AbCreature != null && LBio_NaviHodler.selecetdHolder.AbCreature.ID != ID)
+            {
+                Destroy();
+                return;
+            }
+            if (customDirectionFinder == null)
+            {
+                Destroy();
+                return;
+            }
+
+
+            overseer.AI.scaredDistance = 0f;
             base.Update(eu);
+            
             customDirectionFinder.Update();
             lookAtCommunicationCreature = true;
 
+
+            if(Vector2.Distance(overseer.DangerPos,communicateWith.DangerPos) > 350f)
+            {
+                dontGoToPlayerFrames += 2;
+            }
+            else
+            {
+                dontGoToPlayerFrames = 0;
+            }
+
+
+            if (NaviCreature.Room.offScreenDen)
+            {
+                redCross.partFade = 1f;
+                arrow.partFade = 0f;
+            }
+            else
+            {
+                redCross.partFade = 0f;
+                arrow.partFade = 1f;
+            }
+
             if (overseer.abstractCreature != LBio_NaviOverseer.guideOverseer || communicateWith.dead || NaviCreature == null)
             {
-                stillRelevant = false;
+                Destroy();
                 customDirectionFinder.destroy = true;
                 return;
-            }
-            if (!customDirectionFinder.done)
-            {
-                fade = 0f;
             }
             else
             {
                 if(NaviCreature.Room.index != customDirectionFinder.showToRoom)
                 {
-                    stillRelevant = false;
+                    Destroy();
                     customDirectionFinder.destroy = true;
+                    customDirectionFinder = null;
                     return;
                 }
 
-                if (room.abstractRoom.index != NaviCreature.Room.index)
+                if(dontGoToPlayerFrames < 400)
                 {
-                    if (shortcutData != null)
+                    if (room.abstractRoom.index != NaviCreature.Room.index)
                     {
-                        arrow.offset = Vector2.zero;
-                        arrow.dir = (room.MiddleOfTile(shortcutData.Value.StartTile) - pos).normalized;
+                        if (shortcutData != null)
+                        {
+                            arrow.offset = Vector2.zero;
+                            arrow.dir = (room.MiddleOfTile(shortcutData.Value.StartTile) - pos).normalized;
+                        }
+                    }
+                    else
+                    {
+                        if (NaviCreature.realizedCreature != null)
+                        {
+                            arrow.partFade = 1f;
+                            if(Vector2.Distance(NaviCreature.realizedCreature.DangerPos, room.MiddleOfTile(displayTile)) < 400f)
+                            {
+                                arrow.dir = -Vector2.up;
+                                arrow.offset = NaviCreature.realizedCreature.DangerPos - (pos - Vector2.up * 60f);
+                            }
+                            else
+                            {
+                                arrow.dir = (NaviCreature.realizedCreature.DangerPos - pos + arrow.lastOffset).normalized;
+                                arrow.offset = Vector2.zero;
+                            }
+                            
+                        }
+                        else
+                        {
+                            arrow.partFade = 0f;
+                        }
                     }
                 }
                 else
                 {
-                    if (NaviCreature.realizedCreature != null)
+                    this.fade = 1f - UnityEngine.Random.value * 0.1f * Mathf.Sin(Time.time + UnityEngine.Random.value) * Mathf.Sin(Time.time+ UnityEngine.Random.value);
+                    arrow.offset = communicateWith.DangerPos - (pos - Vector2.up * 60f);
+                    if(shortcutData != null)
                     {
-                        arrow.dir = (NaviCreature.realizedCreature.DangerPos - pos + arrow.lastOffset).normalized;
-
-                        arrow.offset = NaviCreature.realizedCreature.DangerPos - (pos - Vector2.up * 60f);
-                        symbol.offset = arrow.offset;
-                        effect.offset = arrow.offset;
+                        arrow.dir = (room.MiddleOfTile(shortcutData.Value.StartTile) - (pos + arrow.offset)).normalized;
                     }
                 }
+                symbol.offset = arrow.offset;
+                effect.offset = arrow.offset;
             }
         }
+
+        EntityID? ID;
 
         LBio_NaviArrow arrow;
         LBio_Symbol symbol;
         HologramLightEffect effect;
+        LBio_RedCross redCross;
+
+        int dontGoToPlayerFrames = 0;
+
         public override Color color => OverseerColorModify.GetColor(806) == null ? new Color(0.44705883f, 0.9019608f, 0.76862746f) : OverseerColorModify.GetColor(806).Value;
         public CustomDirectionFinder customDirectionFinder;
         ShortcutData? shortcutData;
@@ -225,6 +321,39 @@ namespace LittleBiologist
         Color symbolCol;
     }
 
+    public class LBio_RedCross : OverseerHologram.HologramPart
+    {
+        public LBio_RedCross(OverseerHologram hologram, int firstSprite, bool small) : base(hologram, firstSprite)
+        {
+            List<Vector2> list = new List<Vector2>();
+            for (int i = 0; i < 4; i++)
+            {
+                Vector2 vector = Custom.DegToVec(45f + 90f * (float)i);
+                list.Add(vector * 5f + Custom.PerpendicularVector(vector) * 5f);
+                list.Add(vector * 60f + Custom.PerpendicularVector(vector) * 5f);
+                list.Add(vector * 60f - Custom.PerpendicularVector(vector) * 5f);
+            }
+            for (int j = 0; j < list.Count; j++)
+            {
+                List<Vector2> list3;
+                List<Vector2> list2 = list3 = list;
+                int num2;
+                int num = num2 = j;
+                Vector2 a = list3[num2];
+                list2[num] = a * ((!small) ? 1f : 0.4f);
+            }
+            base.AddClosed3DPolygon(list, 5f);
+        }
+
+        public override Color GetToColor
+        {
+            get
+            {
+                return new Color(1f, 0f, 0f);
+            }
+        }
+    }
+
     public class CustomDirectionFinder
     {
         public CustomDirectionFinder(World world, AbstractRoom destination,LBio_NaviHologram owner)
@@ -256,12 +385,11 @@ namespace LittleBiologist
             else
             {
                 int count = checkNext.Count;
-                Log(' ');
                 while(count > 0)
                 {
                     count--;
                     IntVector2 connectionToForward = checkNext.Dequeue();
-                   
+
                     AbstractRoom newCheckRoom = world.GetAbstractRoom(connectionToForward.x);
                     if(newCheckRoom != null)
                     {
@@ -269,9 +397,11 @@ namespace LittleBiologist
                         {
                             if (!forwardRooms.ContainsKey(newCheckRoom.connections[i]))
                             {
-                                Log("New Connection", "newRoom : " + newCheckRoom.connections[i].ToString(), "forwardRoom : " + newCheckRoom.index.ToString());
-                                checkNext.Enqueue(new IntVector2(newCheckRoom.connections[i], newCheckRoom.index));
-                                forwardRooms.Add(newCheckRoom.connections[i], newCheckRoom.index);
+                                if(newCheckRoom.connections[i] != -1)
+                                {
+                                    checkNext.Enqueue(new IntVector2(newCheckRoom.connections[i], newCheckRoom.index));
+                                    forwardRooms.Add(newCheckRoom.connections[i], newCheckRoom.index);
+                                }
                             }
                         }
                     }
@@ -279,14 +409,12 @@ namespace LittleBiologist
             }
         }
 
-
         public int GetForwardRoom(int currentRoom)
         {
             if (forwardRooms.ContainsKey(currentRoom))
             {
                 return forwardRooms[currentRoom];
             }
-            Log("NoForwardRoomFound", currentRoom);
             return -10;
         }
 

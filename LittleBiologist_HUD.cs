@@ -677,7 +677,7 @@ namespace LittleBiologist
                     clickTime = Time.time;
                 }
 
-                if (Input.GetMouseButton(0) && getOneMouseOverLabel)
+                if (Input.GetMouseButton(0) && currentMouseOverLabel != null)
                 {
                     Vector2 deltaMousePos = mousePos - mousePosLastFrame;
                     mousePosLastFrame = mousePos;
