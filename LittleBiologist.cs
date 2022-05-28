@@ -22,6 +22,7 @@ namespace LittleBiologist
         public void OnEnable()
         {
             LBio_OverseerPatch.OnEnable_Patch();
+            LBio_CustomShaders.Patch();
         }
         public void Start()
         {

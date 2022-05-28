@@ -244,6 +244,7 @@ namespace LittleBiologist
                 }
                 symbol.offset = arrow.offset;
                 effect.offset = arrow.offset;
+                redCross.offset = arrow.offset;
             }
         }
 
@@ -469,11 +470,9 @@ namespace LittleBiologist
 
         public override void InitiateSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
         {
-            
-
             sLeaser.sprites[firstSprite] = new FSprite("Futile_White", true);
             sLeaser.sprites[firstSprite].color = hologram.color;
-            sLeaser.sprites[firstSprite].shader = rCam.game.rainWorld.Shaders["HoloGrid"];
+            sLeaser.sprites[firstSprite].shader = rCam.game.rainWorld.Shaders["HoloGridMod"];
 
             for (int i = 1; i < 10; i++)
             {
@@ -573,7 +572,7 @@ namespace LittleBiologist
                     this.activeLinger = 0;
                 }
             }
-            float num = HologramLight.Needed(this.player);
+            float num = Needed(this.player);
             if (num < 0.1f)
             {
                 this.notNeededCounter++;
@@ -606,10 +605,9 @@ namespace LittleBiologist
                 Vector2 vector3 = Vector2.ClampMagnitude(vector - vector2, 240f) / 240f;
                 sLeaser.sprites[firstSprite].x = vector2.x - camPos.x;
                 sLeaser.sprites[firstSprite].y = vector2.y - camPos.y;
-                sLeaser.sprites[firstSprite].scaleX = Mathf.Lerp(15f, 20f, num2 * num3) + Mathf.Sin(num2 * num3 * 3.1415927f) * 30f;
-                sLeaser.sprites[firstSprite].scaleY = Mathf.Lerp(8f, 20f, num2 * num3);
+                sLeaser.sprites[firstSprite].scaleX = Mathf.Lerp(15f, 20f, num2 * num3) + Mathf.Sin(num2 * num3 * 3.1415927f) * 30f * 2f;
+                sLeaser.sprites[firstSprite].scaleY = Mathf.Lerp(8f, 20f, num2 * num3) * 2f;
                 sLeaser.sprites[firstSprite].color = new Color(Mathf.InverseLerp(-1f, 1f, vector3.x), Mathf.InverseLerp(-1f, 1f, vector3.y), num3, num2);
-                sLeaser.sprites[firstSprite]._renderLayer._material.SetColor("GridColor", hologram.color);
                 float num4 = 8f * Mathf.Lerp(6f, 16f, num2 * num3);
                 for (int i = 1; i < 10; i++)
                 {
@@ -676,10 +674,8 @@ namespace LittleBiologist
             }
         }
 
-        // Token: 0x060022CA RID: 8906 RVA: 0x0022314C File Offset: 0x0022134C
-        public static float Needed(Player player)
+        public float Needed(Player player)
         {
-            return 1f;
             if (player.room == null || player.room.Darkness(player.mainBodyChunk.pos) < 0.85f || player.dead || player.room.game.cameras[0].room != player.room)
             {
                 return 0f;
