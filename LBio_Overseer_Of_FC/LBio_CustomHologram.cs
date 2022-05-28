@@ -46,17 +46,17 @@ namespace LittleBiologist
             }
 
             totalSprites = 0;
-            message = EnumExt_LBioOverseer.LBio_NaviHologram;
 
-            effect = new HologramLightEffect(this, totalSprites, 1f, 1f, 100f, 20f);
+            effect = new LBio_LightEffect(this, totalSprites, 1f, 1f, 100f, 20f);
             AddPart(effect);
             arrow = new LBio_NaviArrow(this, totalSprites);
             AddPart(arrow);
 
+            AddPart(new LBio_HoloLight(this,totalSprites));
+            
+
             symbol = new LBio_Symbol(this, totalSprites, NaviCreature.creatureTemplate.type);
             customDirectionFinder = new CustomDirectionFinder(overseer.abstractCreature.world, NaviCreature.Room, this);
-
-            
             //redCross.partFade = 0f;
 
             if (symbol != null)
@@ -74,6 +74,7 @@ namespace LittleBiologist
         public override float DisplayPosScore(IntVector2 testPos)
         {
             float num = base.DisplayPosScore(testPos);
+
             if (customDirectionFinder == null || !customDirectionFinder.done || NaviCreature == null)
             {
                 return num;
@@ -132,14 +133,18 @@ namespace LittleBiologist
         {
             if (!stillRelevant)
             {
+                if (!slatedForDeletetion)
+                {
+                    Destroy();
+                }
                 return;
             }
-            if(LBio_NaviHodler.selecetdHolder == null)
+            if(LBio_NaviHodler.selecetdHolder == null || room != communicateWith.room)
             {
                 Destroy();
                 return;
             }
-            if(LBio_NaviHodler.selecetdHolder != null && LBio_NaviHodler.selecetdHolder.AbCreature != null && LBio_NaviHodler.selecetdHolder.AbCreature.ID != ID)
+            if(LBio_NaviHodler.selecetdHolder != null && ((LBio_NaviHodler.selecetdHolder.AbCreature != null && LBio_NaviHodler.selecetdHolder.AbCreature.ID != ID) || LBio_NaviHodler.selecetdHolder.AbCreature == null))
             {
                 Destroy();
                 return;
@@ -246,7 +251,7 @@ namespace LittleBiologist
 
         LBio_NaviArrow arrow;
         LBio_Symbol symbol;
-        HologramLightEffect effect;
+        LBio_LightEffect effect;
         LBio_RedCross redCross;
 
         int dontGoToPlayerFrames = 0;
@@ -289,7 +294,7 @@ namespace LittleBiologist
         public override void InitiateSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
         {
             IconSymbol.IconSymbolData temp = new IconSymbol.IconSymbolData(type, AbstractPhysicalObject.AbstractObjectType.Creature, 0);
-            symbolCol = CreatureSymbol.ColorOfCreature(temp);
+            symbolCol = CreatureSymbol.ColorOfCreature(temp) * 0.8f + hologram.color * 0.3f;
             sLeaser.sprites[firstSprite] = new FSprite(CreatureSymbol.SpriteNameOfCreature(temp), true) { color = CreatureSymbol.ColorOfCreature(temp) };
         }
 
@@ -298,7 +303,7 @@ namespace LittleBiologist
         public override void DrawSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos, Vector2 partPos, Vector2 headPos, float useFade, float popOut, Color useColor)
         {
             base.DrawSprites(sLeaser, rCam, timeStacker, camPos, partPos, headPos, useFade, popOut, useColor);
-            base.DrawSprites(sLeaser, rCam, timeStacker, camPos, partPos, headPos, useFade, popOut, useColor);
+
             FSprite fsprite = sLeaser.sprites[this.firstSprite];
             if (UnityEngine.Random.value > Mathf.InverseLerp(0.5f, 1f, useFade))
             {
@@ -345,13 +350,412 @@ namespace LittleBiologist
             base.AddClosed3DPolygon(list, 5f);
         }
 
-        public override Color GetToColor
+        public override Color GetToColor => new Color(1f, 0f, 0f) * 0.7f + hologram.color * 0.3f;
+    }
+
+    public class LBio_LightEffect : OverseerHologram.HologramPart
+    {
+        public LBio_LightEffect(OverseerHologram hologram, int firstSprite, float lightAlpha, float darkDownAlpha, float lightRad, float darkDownRad) : base(hologram, firstSprite)
+        {
+            this.darkDownAlpha = darkDownAlpha;
+            this.lightAlpha = lightAlpha;
+            this.darkDownRad = darkDownRad;
+            this.lightRad = lightRad;
+            this.allSpritesHologramShader = false;
+            this.totalSprites = 0;
+            if (darkDownAlpha > 0f)
+            {
+                this.darkSprite = this.totalSprites;
+                this.totalSprites++;
+            }
+            if (lightAlpha > 0f)
+            {
+                this.lightSprite = this.totalSprites;
+                this.totalSprites++;
+            }
+            this.totalSprites = ((this.darkSprite <= -1) ? 0 : 1) + ((this.lightSprite <= -1) ? 0 : 1);
+        }
+
+        public override void InitiateSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
+        {
+            base.InitiateSprites(sLeaser, rCam);
+            for (int i = 0; i < this.totalSprites; i++)
+            {
+                sLeaser.sprites[this.firstSprite + i] = new FSprite("Futile_White", true);
+                if (i == this.darkSprite)
+                {
+                    sLeaser.sprites[this.firstSprite + i].shader = rCam.game.rainWorld.Shaders["FlatLight"];
+                    sLeaser.sprites[this.firstSprite + i].color = new Color(0f, 0f, 0f);
+                }
+                else if (i == this.lightSprite)
+                {
+                    sLeaser.sprites[this.firstSprite + i].shader = rCam.game.rainWorld.Shaders["LightSource"];
+                }
+            }
+        }
+
+        public override void DrawSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos, Vector2 partPos, Vector2 headPos, float useFade, float popOut, Color useColor)
+        {
+            base.DrawSprites(sLeaser, rCam, timeStacker, camPos, partPos, headPos, useFade, popOut, useColor);
+            bool notShowThisFrame = UnityEngine.Random.value > Mathf.InverseLerp(0f, 0.5f, useFade);
+
+            for (int i = 0; i < this.totalSprites; i++)
+            {
+                if (notShowThisFrame)
+                {
+                    sLeaser.sprites[this.firstSprite + i].isVisible = false;
+                    continue;
+                }
+                sLeaser.sprites[this.firstSprite + i].isVisible = true;
+                partPos = Vector3.Lerp(headPos, partPos, popOut);
+                sLeaser.sprites[this.firstSprite + i].x = partPos.x - camPos.x;
+                sLeaser.sprites[this.firstSprite + i].y = partPos.y - camPos.y;
+                if (i == this.lightSprite)
+                {
+                    sLeaser.sprites[this.firstSprite + i].color = useColor;
+                    sLeaser.sprites[this.firstSprite + i].alpha = this.lightAlpha * Mathf.Pow(useFade, 3f);
+                    sLeaser.sprites[this.firstSprite + i].scale = this.lightRad / 8f * (0.5f + 0.5f * useFade);
+                }
+                else if (i == this.darkSprite)
+                {
+                    sLeaser.sprites[this.firstSprite + i].alpha = this.darkDownAlpha * Mathf.Pow(useFade, 3f);
+                    sLeaser.sprites[this.firstSprite + i].scale = this.darkDownRad / 8f * (0.5f + 0.5f * useFade);
+                }
+            }
+
+        }
+        public float darkDownAlpha;
+        public float darkDownRad;
+        public float lightAlpha;
+        public float lightRad;
+        public int darkSprite = -1;
+        public int lightSprite = -1;
+    }
+
+    public class LBio_HoloLight : OverseerHologram.HologramPart
+    {
+        public LBio_HoloLight(OverseerHologram hologram,int firstSprites) : base(hologram, firstSprites)
+        {
+            totalSprites = 10;
+            allSpritesHologramShader = false;
+
+            overseer = hologram.overseer;
+            player = hologram.communicateWith as Player;
+        }
+
+        public bool projectorActive
         {
             get
             {
-                return new Color(1f, 0f, 0f);
+                return hologram.overseer.room == hologram.room && hologram.overseer.mode != Overseer.Mode.Zipping;
             }
         }
+
+        // Token: 0x060022C5 RID: 8901 RVA: 0x00222368 File Offset: 0x00220568
+        public Vector2 OverseerEyePos(float timeStacker)
+        {
+            if (hologram.overseer.graphicsModule == null || hologram.overseer.room == null)
+            {
+                return Vector2.Lerp(hologram.overseer.mainBodyChunk.lastPos, hologram.overseer.mainBodyChunk.pos, timeStacker);
+            }
+            return (hologram.overseer.graphicsModule as OverseerGraphics).DrawPosOfSegment(0f, timeStacker);
+        }
+
+
+        public Vector2 GoalPos()
+        {
+            return Vector2.Lerp(hologram.communicateWith.mainBodyChunk.pos, hologram.communicateWith.bodyChunks[1].pos, 0.3f);
+        }
+
+        public override void InitiateSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
+        {
+            
+
+            sLeaser.sprites[firstSprite] = new FSprite("Futile_White", true);
+            sLeaser.sprites[firstSprite].color = hologram.color;
+            sLeaser.sprites[firstSprite].shader = rCam.game.rainWorld.Shaders["HoloGrid"];
+
+            for (int i = 1; i < 10; i++)
+            {
+                sLeaser.sprites[firstSprite + i] = new FSprite("pixel", true);
+                sLeaser.sprites[firstSprite + i].shader = rCam.game.rainWorld.Shaders["Hologram"];
+                sLeaser.sprites[firstSprite + i].color = hologram.color;
+                sLeaser.sprites[firstSprite + i].anchorY = 0f;
+            }
+        }
+
+        public override void Update()
+        {
+            base.Update();
+            this.lastPos = this.pos;
+            this.lastPower = this.power;
+            this.lastDisplace = this.displace;
+            this.lastFlicker = this.flicker;
+            this.lastProjPos = this.projPos;
+            this.lastPushAroundPos = this.pushAroundPos;
+            this.projPos = this.OverseerEyePos(1f);
+            this.pushAroundPos *= 0.8f;
+            if (this.overseer.extended > 0f)
+            {
+                this.pushAroundPos += (this.overseer.firstChunk.pos - this.overseer.firstChunk.lastPos) * this.overseer.extended;
+            }
+            if (!Custom.DistLess(this.projPos, this.pos, 1700f))
+            {
+                this.outOfRangeCounter++;
+            }
+            else
+            {
+                this.outOfRangeCounter -= 10;
+            }
+            this.outOfRangeCounter = Custom.IntClamp(this.outOfRangeCounter, 0, 200);
+            this.displace = Vector2.Lerp(Custom.MoveTowards(this.displace, this.displaceGoal, 2f), this.displaceGoal, 0.05f);
+            if (UnityEngine.Random.value < 0.06666667f)
+            {
+                this.displaceGoal += Custom.RNV() * UnityEngine.Random.value * 20f;
+                if (this.displaceGoal.magnitude > 60f)
+                {
+                    this.displaceGoal = Custom.RNV() * UnityEngine.Random.value * UnityEngine.Random.value * 60f;
+                }
+            }
+            if (UnityEngine.Random.value < Custom.LerpMap(Vector2.Distance(this.pos, this.projPos), 500f, 1200f, 0.005f, 0.033333335f))
+            {
+                this.flickerFac = UnityEngine.Random.value;
+            }
+            this.flickerFac = Mathf.Max(0f, this.flickerFac - 0.033333335f);
+            if (UnityEngine.Random.value < 0.6f * this.flickerFac)
+            {
+                this.flicker = Mathf.Lerp(this.flicker, 0.5f + 0.5f * this.flickerFac, UnityEngine.Random.value);
+            }
+            else
+            {
+                this.flicker = Mathf.Max(0f, this.flicker - 0.1f);
+            }
+            if (this.projectorActive)
+            {
+                this.activeLinger = 20;
+            }
+            else if (this.activeLinger > 0)
+            {
+                this.activeLinger--;
+            }
+            if (hologram.communicateWith.room == hologram.room && hologram.communicateWith.enteringShortCut == null && this.activeLinger > 0 && !this.powerDownAndKill)
+            {
+                if (this.respawn)
+                {
+                    if (this.power <= 0f && this.lastPower <= 0f)
+                    {
+                        this.respawn = false;
+                        this.pos = this.GoalPos();
+                        this.inFront *= 0f;
+                    }
+                    else
+                    {
+                        this.power = Mathf.Max(0f, this.power - 0.033333335f);
+                    }
+                }
+                else
+                {
+                    this.inFront = Vector2.Lerp(this.inFront, this.player.mainBodyChunk.pos - this.player.mainBodyChunk.lastPos, 0.1f);
+                    this.pos = Vector2.Lerp(Custom.MoveTowards(this.pos, this.GoalPos(), 7f), this.GoalPos(), 0.1f);
+                    this.power = Mathf.Min(((!this.projectorActive) ? 0.9f : 1f) * Mathf.InverseLerp(200f, 150f, (float)this.outOfRangeCounter) * Mathf.InverseLerp(80f, 50f, (float)this.notNeededCounter), this.power + 0.033333335f);
+                }
+            }
+            else
+            {
+                this.respawn = true;
+                this.power = Mathf.Max(0f, this.power - 0.033333335f);
+                if (this.powerDownAndKill && this.power <= 0f && this.lastPower <= 0f)
+                {
+                    partFade = 0f;
+                }
+                if (!this.projectorActive)
+                {
+                    this.activeLinger = 0;
+                }
+            }
+            float num = HologramLight.Needed(this.player);
+            if (num < 0.1f)
+            {
+                this.notNeededCounter++;
+            }
+            else if (num > 0.4f)
+            {
+                this.notNeededCounter -= 10;
+            }
+            else if (num > 0.2f)
+            {
+                this.notNeededCounter--;
+            }
+            this.notNeededCounter = Custom.IntClamp(this.notNeededCounter, 0, 500);
+            if ((hologram.communicateWith.room != null && hologram.communicateWith.room != hologram.room) || this.notNeededCounter >= 500)
+            {
+                partFade = 0f;
+            }
+        }
+        public override void DrawSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos, Vector2 partPos, Vector2 headPos, float useFade, float popOut, Color useColor)
+        {
+            if (hologram.room != null)
+            {
+                float num = Mathf.Lerp(this.lastFlicker, this.flicker, timeStacker);
+                float num2 = Mathf.Lerp(this.lastPower, this.power, timeStacker) * (1f - Mathf.Pow(num, 2f + UnityEngine.Random.value * 2f));
+                float num3 = Mathf.Lerp(this.lastPower, this.power, timeStacker) * (1f - 0.05f * num);
+                Vector2 vector = (hologram.overseer.room != hologram.room) ? Vector2.Lerp(this.lastProjPos, this.projPos, timeStacker) : this.OverseerEyePos(timeStacker);
+                Vector2 vector2 = Vector2.Lerp(this.lastPos, this.pos, timeStacker) + Vector2.Lerp(this.lastDisplace, this.displace, timeStacker);
+                vector2 = Vector2.Lerp(vector, vector2, num3) + Vector2.Lerp(this.lastPushAroundPos, this.pushAroundPos, timeStacker);
+                num2 *= Custom.LerpMap(Vector2.Distance(vector2, vector), 500f, 1200f, 1f, 0.75f, 0.6f);
+                Vector2 vector3 = Vector2.ClampMagnitude(vector - vector2, 240f) / 240f;
+                sLeaser.sprites[firstSprite].x = vector2.x - camPos.x;
+                sLeaser.sprites[firstSprite].y = vector2.y - camPos.y;
+                sLeaser.sprites[firstSprite].scaleX = Mathf.Lerp(15f, 20f, num2 * num3) + Mathf.Sin(num2 * num3 * 3.1415927f) * 30f;
+                sLeaser.sprites[firstSprite].scaleY = Mathf.Lerp(8f, 20f, num2 * num3);
+                sLeaser.sprites[firstSprite].color = new Color(Mathf.InverseLerp(-1f, 1f, vector3.x), Mathf.InverseLerp(-1f, 1f, vector3.y), num3, num2);
+                sLeaser.sprites[firstSprite]._renderLayer._material.SetColor("GridColor", hologram.color);
+                float num4 = 8f * Mathf.Lerp(6f, 16f, num2 * num3);
+                for (int i = 1; i < 10; i++)
+                {
+                    if (num2 < 0.5f)
+                    {
+                        sLeaser.sprites[firstSprite + i].isVisible = false;
+                    }
+                    else
+                    {
+                        Vector2 vector4 = vector2 + Custom.RNV() * Mathf.Pow(UnityEngine.Random.value, 0.65f) * num4;
+                        float num5 = 0.75f;
+                        if (hologram.room.GetTile(vector4).Solid)
+                        {
+                            num5 = 0f;
+                        }
+                        else if (UnityEngine.Random.value < Custom.LerpMap(num3, 0.5f, 1f, 0.85f, 0.25f))
+                        {
+                            num5 = 0.75f;
+                        }
+                        else if (UnityEngine.Random.value < 0.5f && hologram.room.GetTile(vector4).verticalBeam)
+                        {
+                            vector4.x = hologram.room.MiddleOfTile(vector4).x + ((UnityEngine.Random.value >= 0.5f) ? 2f : -2f);
+                            num5 = 1f;
+                        }
+                        else if (UnityEngine.Random.value < 0.5f && hologram.room.GetTile(vector4).horizontalBeam)
+                        {
+                            vector4.y = hologram.room.MiddleOfTile(vector4).y + ((UnityEngine.Random.value >= 0.5f) ? 2f : -2f);
+                            num5 = 1f;
+                        }
+                        else
+                        {
+                            int num6 = UnityEngine.Random.Range(0, 4);
+                            for (int j = 0; j < 4; j++)
+                            {
+                                if (!Custom.DistLess(vector, vector4 + Custom.fourDirections[num6].ToVector2() * 20f, num4))
+                                {
+                                    num5 = 0f;
+                                    break;
+                                }
+                                if (hologram.room.GetTile(vector4 + Custom.fourDirections[num6].ToVector2() * 20f).Solid)
+                                {
+                                    vector4 = hologram.room.MiddleOfTile(vector4 + Custom.fourDirections[num6].ToVector2() * 20f) - Custom.fourDirections[num6].ToVector2() * 10f;
+                                    num5 = 1f;
+                                    break;
+                                }
+                            }
+                        }
+                        if (num5 > 0f)
+                        {
+                            Vector2 vector5 = Vector2.Lerp(vector4, vector, Mathf.Pow(UnityEngine.Random.value, 3f - 1.5f * num2));
+                            sLeaser.sprites[firstSprite + i].isVisible = true;
+                            sLeaser.sprites[firstSprite + i].x = vector5.x - camPos.x;
+                            sLeaser.sprites[firstSprite + i].y = vector5.y - camPos.y;
+                            sLeaser.sprites[firstSprite + i].rotation = Custom.AimFromOneVectorToAnother(vector5, vector4);
+                            sLeaser.sprites[firstSprite + i].scaleY = Vector2.Distance(vector5, vector4);
+                            sLeaser.sprites[firstSprite + i].alpha = num5 * Mathf.Pow(UnityEngine.Random.value, 0.2f) * Mathf.InverseLerp(0.5f, 0.6f, num2);
+                        }
+                        else
+                        {
+                            sLeaser.sprites[i].isVisible = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Token: 0x060022CA RID: 8906 RVA: 0x0022314C File Offset: 0x0022134C
+        public static float Needed(Player player)
+        {
+            return 1f;
+            if (player.room == null || player.room.Darkness(player.mainBodyChunk.pos) < 0.85f || player.dead || player.room.game.cameras[0].room != player.room)
+            {
+                return 0f;
+            }
+            for (int i = 0; i < player.grasps.Length; i++)
+            {
+                if (player.grasps[i] != null)
+                {
+                    if (player.grasps[i].grabbed is Lantern)
+                    {
+                        return 0f;
+                    }
+                    if (player.grasps[i].grabbed is LanternMouse && (player.grasps[i].grabbed as LanternMouse).State.battery > 200)
+                    {
+                        return 0f;
+                    }
+                }
+            }
+            float num = Mathf.InverseLerp(0.85f, 0.92f, player.room.Darkness(player.mainBodyChunk.pos));
+            for (int j = 0; j < player.room.lightSources.Count; j++)
+            {
+                if (player.room.lightSources[j].Rad > 120f && player.room.lightSources[j].Alpha > 0.2f && Custom.DistLess(player.mainBodyChunk.pos, player.room.lightSources[j].Pos, player.room.lightSources[j].rad + 200f))
+                {
+                    num -= Mathf.InverseLerp(player.room.lightSources[j].rad + 200f, player.room.lightSources[j].rad * 0.8f, Vector2.Distance(player.mainBodyChunk.pos, player.room.lightSources[j].Pos));
+                    if (num <= 0f)
+                    {
+                        return 0f;
+                    }
+                }
+            }
+            return num;
+        }
+
+        public Vector2 pos;
+
+        public Vector2 lastPos;
+
+        public Vector2 lastDisplace;
+
+        public Vector2 displace;
+
+        public Vector2 displaceGoal;
+
+        public Vector2 lastPushAroundPos;
+
+        public Vector2 pushAroundPos;
+
+        public Vector2 projPos;
+
+        public Vector2 lastProjPos;
+
+        public float power;
+
+        public float lastPower;
+
+        public int outOfRangeCounter;
+
+        public int notNeededCounter;
+
+        public float flicker;
+
+        public float lastFlicker;
+
+        public float flickerFac;
+
+        public Player player;
+
+        public Overseer overseer;
+
+        public Vector2 inFront;
+
+        public bool powerDownAndKill;
+
+        public bool respawn;
+
+        public int activeLinger;
     }
 
     public class CustomDirectionFinder

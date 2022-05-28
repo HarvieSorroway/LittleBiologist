@@ -19,6 +19,10 @@ namespace LittleBiologist
         public static RoomCamera currentCamera;
         public static HUD.HUD currentHUD;
 
+        public void OnEnable()
+        {
+            LBio_OverseerPatch.OnEnable_Patch();
+        }
         public void Start()
         {
             instance = this;
@@ -38,7 +42,7 @@ namespace LittleBiologist
             LBio_LabelConfig.SetupConfig();
             LBio_Safari.Patch();
             LBio_NaviOverseer.Patch();
-            LBio_OverseerPatch.Patch();
+            
         }
 
         private void AbstractCreature_ctor(On.AbstractCreature.orig_ctor orig, AbstractCreature self, World world, CreatureTemplate creatureTemplate, Creature realizedCreature, WorldCoordinate pos, EntityID ID)

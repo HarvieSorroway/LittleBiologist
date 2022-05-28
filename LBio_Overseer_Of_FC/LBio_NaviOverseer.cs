@@ -7,8 +7,9 @@ using LittleBiologist.LBio_Navigations;
 using System.Collections;
 using UnityEngine;
 using static LittleBiologist.LBio_Const;
-
-
+using Random = UnityEngine.Random;
+using CoralBrain;
+using RWCustom;
 
 namespace LittleBiologist
 {
@@ -21,7 +22,20 @@ namespace LittleBiologist
             On.Overseer.TryAddHologram += Overseer_TryAddHologram;
             On.OverseerAbstractAI.HowInterestingIsCreature += OverseerAbstractAI_HowInterestingIsCreature;
             On.Overseer.Update += Overseer_Update;
-            //On.OverseerAI.HoverScoreOfTile += OverseerAI_HoverScoreOfTile;
+            On.Player.Update += Player_Update;
+            On.OverseerAbstractAI.RoomAllowed += OverseerAbstractAI_RoomAllowed;
+        }
+
+        private static bool OverseerAbstractAI_RoomAllowed(On.OverseerAbstractAI.orig_RoomAllowed orig, OverseerAbstractAI self, int room)
+        {
+            if(self.ownerIterator == 806)
+            {
+                return room >= self.world.firstRoomIndex && room < self.world.firstRoomIndex + self.world.NumberOfRooms;
+            }
+            else
+            {
+                return orig.Invoke(self, room);
+            }
         }
 
         private static void Overseer_Update(On.Overseer.orig_Update orig, Overseer self, bool eu)
@@ -31,7 +45,7 @@ namespace LittleBiologist
             {
                 if(LBio_NaviHodler.selecetdHolder != null && LBio_NaviHodler.selecetdHolder.AbCreature != null)
                 {
-                    if(self.room != null && self.room.world != null && self.room.world.game != null && self.room.world.game.Players != null && self.room.world.game.Players.Count > 0 && self.room.world.game.Players[0] != null && self.room.world.game.Players[0].realizedCreature != null)
+                    if(self.room != null && self.room.world != null && self.room.world.game != null && self.room.world.game.Players != null && self.room.world.game.Players.Count > 0 && self.room.world.game.Players[0] != null && self.room.world.game.Players[0].realizedCreature != null && self.room == self.room.world.game.Players[0].realizedCreature.room && !self.room.world.game.Players[0].state.dead)
                     {
                         self.TryAddHologram(EnumExt_LBioOverseer.LBio_NaviHologram, self.room.world.game.Players[0].realizedCreature, float.MaxValue);
                     }
@@ -67,13 +81,19 @@ namespace LittleBiologist
             guideOverseer = null;
         }
 
+        private static void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
+        {
+            orig.Invoke(self, eu);
+            if(self.playerState.playerNumber == 0)
+            {
+                Update(self);
+            }
+        }
+
+
         private static void RainWorldGame_Update(On.RainWorldGame.orig_Update orig, RainWorldGame self)
         {
             orig.Invoke(self);
-            if(self.Players.Count > 0)
-            {
-                Update(self.Players[0].realizedCreature as Player);
-            }
             for(int i = LBio_NaviHodler.allHolders.Count - 1;i >= 0; i--)
             {
                 AbstractCreature temp = LBio_NaviHodler.allHolders[i].AbCreature;
@@ -84,9 +104,8 @@ namespace LittleBiologist
         {
             if (player == null) return;
 
-            if(LBio_NaviHodler.selecetdHolder != null && LBio_NaviHodler.selecetdHolder.AbCreature != null)
+            if(LBio_NaviHodler.selecetdHolder != null)
             {
-                //bring NaviGuide to player
                 BringOverseerToPlayer(player);
             }
             else

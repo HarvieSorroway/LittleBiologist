@@ -51,6 +51,12 @@
       <HintPath>..\..\..\Desktop\references\HOOKS-Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="MonoMod.RuntimeDetour">
+      <HintPath>..\..\..\Desktop\references\MonoMod.RuntimeDetour.dll</HintPath>
+    </Reference>
+    <Reference Include="MonoMod.RuntimeDetour.HookGen">
+      <HintPath>..\..\..\Desktop\references\MonoMod.RuntimeDetour.HookGen.exe</HintPath>
+    </Reference>
     <Reference Include="Partiality">
       <HintPath>..\..\..\Desktop\references\Partiality.dll</HintPath>
     </Reference>
