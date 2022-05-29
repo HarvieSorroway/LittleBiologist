@@ -94,5 +94,8 @@
   <ItemGroup>
     <None Include="Resources\CompiledShader.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CustomBlur.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

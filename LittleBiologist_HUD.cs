@@ -75,7 +75,9 @@ namespace LittleBiologist
         public void InitSprites()
         {
             connectLine = new CustomFSprite("pixel");
+            connectLine.shader = rCam.room.world.game.rainWorld.Shaders["CustomBlur"];
             background = new FSprite("pixel", true);
+            background.shader = rCam.room.world.game.rainWorld.Shaders["CustomBlur"];
 
             //设置图表灯
             IconSymbol.IconSymbolData iconSymbol = new IconSymbol.IconSymbolData(Creature.abstractCreature.creatureTemplate.type, Creature.abstractCreature.type, 0);
@@ -201,19 +203,6 @@ namespace LittleBiologist
                 Color aimColor = Color.Lerp(Color.gray,lBio_LabelPages[Indexer].GetColor(),0.4f);
                 aimColor.a = aimColor.a * smoothAlpha * smoothShowingZoom;
 
-                if (rCam != null)
-                {
-                    Color reverseCol = rCam.PixelColorAtCoordinate(background.GetPosition() + new Vector2(background.scaleX / 2 , background.scaleY / 2) + rCam.pos) / 5;
-                    reverseCol += rCam.PixelColorAtCoordinate(background.GetPosition() + new Vector2(-background.scaleX / 2, background.scaleY / 2) + rCam.pos) / 5;
-                    reverseCol += rCam.PixelColorAtCoordinate(background.GetPosition() + new Vector2(background.scaleX / 2, -background.scaleY / 2) + rCam.pos) / 5;
-                    reverseCol += rCam.PixelColorAtCoordinate(background.GetPosition() + new Vector2(-background.scaleX / 2, -background.scaleY / 2) + rCam.pos) / 5;
-                    reverseCol += rCam.PixelColorAtCoordinate(background.GetPosition() + rCam.pos) / 5f;
-                    reverseCol.a = aimColor.a;
-                    reverseCol = Color.Lerp(reverseCol, new Color(1 - reverseCol.r, 1 - reverseCol.g, 1 - reverseCol.b, aimColor.a), reverseCol.grayscale * reverseCol.grayscale);
-
-                    aimColor = Color.Lerp(aimColor, reverseCol, 0.65f);
-                };
-                
                 smoothBackgroundColor = Color.Lerp(lastBackgroundColor, aimColor, 0.1f);
                 lastBackgroundColor = smoothBackgroundColor;
 

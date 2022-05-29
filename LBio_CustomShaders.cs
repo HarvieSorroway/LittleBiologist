@@ -20,11 +20,15 @@ namespace LittleBiologist
             orig.Invoke(self);
 
             var shader_Text = LBio_Res.CompiledShader;
-
             Material material = new Material(shader_Text);
             Shader shader = material.shader;
 
+            var blurShader = LBio_Res.CustomBlur;
+            Material blur_material = new Material(blurShader);
+            Shader blur_shader = blur_material.shader;
+
             self.Shaders.Add("HoloGridMod",FShader.CreateShader("HoloGridMod", shader));
+            self.Shaders.Add("CustomBlur", FShader.CreateShader("CustomBlur", blur_shader));
         }
     }
 }

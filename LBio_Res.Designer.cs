@@ -61,25 +61,23 @@ namespace LittleBiologist {
         }
         
         /// <summary>
-        ///   查找类似 // Upgrade NOTE: replaced &apos;mul(UNITY_MATRIX_MVP,*)&apos; with &apos;UnityObjectToClipPos(*)&apos;
+        ///   查找类似 // Compiled shader for PC, Mac &amp; Linux Standalone, uncompressed size: 18.9KB
         ///
-        ///// Upgrade NOTE: replaced &apos;mul(UNITY_MATRIX_MVP,*)&apos; with &apos;UnityObjectToClipPos(*)&apos;
+        ///Shader &quot;Futile/HoloGrid&quot; {
+        ///Properties {
+        /// _MainTex (&quot;Base (RGB) Trans (A)&quot;, 2D) = &quot;white&quot; {}
+        /// _Color (&quot;GridColor&quot;, Color) = (0.32,0.38,0.66,1)
+        ///}
+        ///SubShader { 
+        /// Tags { &quot;QUEUE&quot;=&quot;Transparent&quot; &quot;IGNOREPROJECTOR&quot;=&quot;true&quot; &quot;RenderType&quot;=&quot;Transparent&quot; }
         ///
-        ///Shader &quot;Futile/HoloGridMod&quot; 
-        ///{
-        ///	Properties 
-        ///	{
-        ///		_MainTex (&quot;Base (RGB) Trans (A)&quot;, 2D) = &quot;white&quot; {}
-        ///		_Color(&quot;GridColor&quot;,Color) = (0.32, 0.38, 0.66, 1)
-        ///	}
-        ///	
-        ///	Category 
-        ///	{
-        ///		Tags {&quot;Queue&quot;=&quot;Transparent&quot; &quot;IgnoreProjector&quot;=&quot;True&quot; &quot;RenderType&quot;=&quot;Transparent&quot;}
-        ///		ZWrite Off
-        ///		//Alphatest Greater 0
-        ///		Blend SrcAlpha OneMinusSrcAlpha 
-        ///		Fog { Color(0,0, [字符串的其余部分被截断]&quot;; 的本地化字符串。
+        ///
+        /// // Stats for Vertex shader:
+        /// //       d3d11 : 9 math
+        /// //        d3d9 : 10 math
+        /// //      opengl : 10 math
+        /// // Stats for Fragment shader:
+        /// //       d3d11 : 157 math, 13 texture [字符串的其余部分被截断]&quot;; 的本地化字符串。
         /// </summary>
         internal static string CompiledShader {
             get {
@@ -88,11 +86,29 @@ namespace LittleBiologist {
         }
         
         /// <summary>
-        ///   查找类似 // Compiled shader for PC, Mac &amp; Linux Standalone, uncompressed size: 5.5KB\r\n\r\nShader \&quot;Test\&quot; {\r\nSubShader { \r\n\r\n\r\n // Stats for Vertex shader:\r\n //       d3d11 : 5 math\r\n //    d3d11_9x : 5 math\r\n //        d3d9 : 5 math\r\n //      opengl : 5 math\r\n // Stats for Fragment shader:\r\n //        d3d9 : 3 math\r\n //      opengl : 1 math\r\n Pass {\r\nProgram \&quot;vp\&quot; {\r\nSubProgram \&quot;opengl \&quot; {\r\n// Stats: 5 math\r\nBind \&quot;vertex\&quot; Vertex\r\nBind \&quot;normal\&quot; Normal\r\n\&quot;!!ARBvp1.0\r\nPAR [字符串的其余部分被截断]&quot;; 的本地化字符串。
+        ///   查找类似 // Compiled shader for PC, Mac &amp; Linux Standalone, uncompressed size: 12.2KB
+        ///
+        ///Shader &quot;Custom/GaussianBlur&quot; {
+        ///Properties {
+        /// _MainTex (&quot;Base (RGB) Trans (A)&quot;, 2D) = &quot;white&quot; {}
+        /// _Col (&quot;TempCol&quot;, Color) = (0,0,0,1)
+        ///}
+        ///SubShader { 
+        /// Tags { &quot;QUEUE&quot;=&quot;Transparent&quot; &quot;IGNOREPROJECTOR&quot;=&quot;true&quot; &quot;RenderType&quot;=&quot;Transparent&quot; }
+        /// GrabPass {
+        /// }
+        ///
+        ///
+        /// // Stats for Vertex shader:
+        /// //       d3d11 : 9 math
+        /// //        d3d9 : 10 math
+        /// //      opengl : 10 math
+        /// // Stats for Fragment shader:
+        /// //       d3d11 : 36 math, 12  [字符串的其余部分被截断]&quot;; 的本地化字符串。
         /// </summary>
-        internal static string YellowShader {
+        internal static string CustomBlur {
             get {
-                return ResourceManager.GetString("YellowShader", resourceCulture);
+                return ResourceManager.GetString("CustomBlur", resourceCulture);
             }
         }
     }
